@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FortiTwin Hume Test</title>
+    <style>
+        body { font-family: sans-serif; padding: 2em; }
+        #status { margin-top: 1em; font-weight: bold; }
+        input, button { font-size: 1.2em; padding: 0.5em; }
+    </style>
+</head>
+<body>
+    <h1>Hume Real-time Test Client</h1>
+    <p>
+        <b>Instructions:</b>
+        <ol>
+            <li>Start your FastAPI server.</li>
+            <li>Use the API docs at <a href="http://127.0.0.1:8000/docs" target="_blank">/docs</a> to start a new interview and get a session ID.</li>
+            <li>Paste the session ID below and click "Start Streaming".</li>
+            <li>Allow microphone access when prompted.</li>
+        </ol>
+    </p>
+
+    <input type="text" id="sessionId" placeholder="Paste session_id here" size="40">
+    <button id="startButton">Start Streaming</button>
+    <button id="stopButton" disabled>Stop Streaming</button>
+    <div id="status">Status: Not Connected</div>
+    <pre id="messages" style="white-space: pre-wrap; word-wrap: break-word;"></pre>
+
+    <script>
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const sessionIdInput = document.getElementById('sessionId');
+        const statusDiv = document.getElementById('status');
+        const messagesDiv = document.getElementById('messages');
+
+        let socket;
+        let mediaRecorder;
+        let audioStream;
+        let audioContext;
+        let audioQueue = [];
+        let isPlaying = false;
+
+        function arrayBufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
+        
+        // ✅ --- NEW AND IMPROVED AUDIO PLAYBACK --- ✅
+        function processAudioQueue() {
+            if (isPlaying || audioQueue.length === 0) {
+                return;
+            }
+            isPlaying = true;
+
+            const base64Audio = audioQueue.shift();
+            const audioData = atob(base64Audio);
+            const arrayBuffer = new ArrayBuffer(audioData.length);
+            const uint8Array = new Uint8Array(arrayBuffer);
+            for (let i = 0; i < audioData.length; i++) {
+                uint8Array[i] = audioData.charCodeAt(i);
+            }
+
+            audioContext.decodeAudioData(arrayBuffer, (buffer) => {
+                const source = audioContext.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioContext.destination);
+                source.onended = () => {
+                    isPlaying = false;
+                    processAudioQueue(); // Play next chunk
+                };
+                source.start(0);
+            }, (error) => {
+                console.error("Error decoding audio data:", error);
+                isPlaying = false;
+            });
+        }
+
+        startButton.onclick = async () => {
+            const sessionId = sessionIdInput.value;
+            if (!sessionId) {
+                alert('Please provide a session ID.');
+                return;
+            }
+
+            // Initialize AudioContext on user interaction
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+            }
+
+            try {
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                statusDiv.textContent = 'Status: Microphone accessed.';
+
+                socket = new WebSocket(`ws://127.0.0.1:8000/ws/hume/${sessionId}`);
+                
+                socket.onopen = () => {
+                    statusDiv.textContent = 'Status: Connected. Sending configuration...';
+                    startButton.disabled = true;
+                    stopButton.disabled = false;
+
+                    const configMessage = {
+                        "type": "session_config",
+                        "models": { "prosody": {}, "language": {} }
+                    };
+                    socket.send(JSON.stringify(configMessage));
+                };
+
+                let isConfigured = false;
+                socket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    messagesDiv.textContent = 'Last Message:\n' + JSON.stringify(data, null, 2);
+
+                    if (!isConfigured) {
+                        isConfigured = true;
+                        statusDiv.textContent = 'Status: Config confirmed. Streaming audio...';
+                        
+                        mediaRecorder = new MediaRecorder(audioStream);
+                        mediaRecorder.ondataavailable = async (event) => {
+                            if (event.data.size > 0 && socket.readyState === WebSocket.OPEN) {
+                                const arrayBuffer = await event.data.arrayBuffer();
+                                const base64Audio = arrayBufferToBase64(arrayBuffer);
+                                const payload = JSON.stringify({ "type": "audio_input", "data": base64Audio });
+                                socket.send(payload);
+                            }
+                        };
+                        mediaRecorder.start(200);
+                    }
+                    
+                    if (data.type === 'audio_output' && data.data) {
+                        audioQueue.push(data.data);
+                        processAudioQueue();
+                    }
+                };
+
+                socket.onclose = () => {
+                    statusDiv.textContent = 'Status: Connection closed.';
+                    stopStreaming();
+                };
+
+                socket.onerror = (error) => {
+                    console.error('WebSocket Error:', error);
+                    statusDiv.textContent = 'Status: WebSocket error.';
+                };
+
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                statusDiv.textContent = 'Status: Could not access microphone.';
+            }
+        };
+
+        stopButton.onclick = () => {
+            stopStreaming();
+        };
+
+        function stopStreaming() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            if (audioStream) {
+                audioStream.getTracks().forEach(track => track.stop());
+            }
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.close();
+            }
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            statusDiv.textContent = 'Status: Not Connected';
+            audioQueue = []; // Clear the queue on stop
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Git version control
+.git
+.gitignore
+
+# Docker-specific
+Dockerfile
+.dockerignore
+
+# Node.js dependencies - VERY IMPORTANT
+node_modules
+
+# Next.js build output
+.next
+
+# Local environment variables
+.env
+.env.local
+
+# Test reports
+coverage
+
+# Editor-specific
+.vscode

@@ -1,0 +1,108 @@
+// in prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  HR
+  ADMIN
+}
+
+model User {
+  id                 String       @id @default(auto()) @map("_id") @db.ObjectId
+  name               String
+  email              String       @unique
+  password           String
+  role               Role         @default(STUDENT)
+  createdAt          DateTime     @default(now())
+  createdAssessments Assessment[] @relation("CreatedByHR")
+  takenAssessments   Assessment[] @relation("TakenByCandidate")
+  reports            Report[]
+}
+
+model Assessment {
+  id                  String               @id @default(auto()) @map("_id") @db.ObjectId
+  candidateId         String               @db.ObjectId
+  hrId                String               @db.ObjectId
+  status              String
+  createdAt           DateTime             @default(now())
+  candidate           User                 @relation("TakenByCandidate", fields: [candidateId], references: [id])
+  hr                  User                 @relation("CreatedByHR", fields: [hrId], references: [id])
+  technicalAssessment TechnicalAssessment?
+  behavioralInterview BehavioralInterview?
+  report              Report?
+}
+
+model TechnicalAssessment {
+  id                  String           @id @default(auto()) @map("_id") @db.ObjectId
+  assessmentId        String           @unique @db.ObjectId
+  assessment          Assessment       @relation(fields: [assessmentId], references: [id])
+  status              String
+  code                String?
+  language            String?
+  startedAt           DateTime         @default(now())
+  completedAt         DateTime?
+  evaluationResults   Json?
+  score               Float?
+  questionIds         String[]         @db.ObjectId
+  questions           CodingQuestion[] @relation(fields: [questionIds], references: [id])
+}
+
+model BehavioralInterview {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  assessmentId String     @unique @db.ObjectId
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  status       String
+  startedAt    DateTime   @default(now())
+  completedAt  DateTime?
+  transcript   Json?
+}
+
+// ====================================================================
+// --- THIS IS THE UPDATED REPORT MODEL ---
+// ====================================================================
+model Report {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  assessmentId    String   @unique @db.ObjectId
+  assessment      Assessment @relation(fields: [assessmentId], references: [id])
+  candidateId     String   @db.ObjectId
+  candidate       User     @relation(fields: [candidateId], references: [id])
+  
+  // Existing Fields
+  summary         String?
+  technicalScore  Float?
+
+  // --- NEW FIELDS TO STORE AI ANALYSIS ---
+  // We use the Json type to store complex data like arrays and objects.
+  strengths             Json? // Will store: ["Communication", "Teamwork"]
+  areasForImprovement   Json? // Will store: ["More specific examples", "Deeper technical detail"]
+  behavioralScores      Json? // Will store: { "communication": 85, "problemSolving": 92 }
+  
+  // You can remove these individual score fields if you prefer to store them
+  // inside the behavioralScores JSON object. I've left them for now.
+  roleFitScore    Float?
+  cultureFitScore Float?
+  honestyScore    Float?
+
+  createdAt       DateTime @default(now())
+}
+
+model CodingQuestion {
+  id                     String                @id @default(auto()) @map("_id") @db.ObjectId
+  title                  String
+  description            String
+  difficulty             String
+  testCases              Json
+  createdAt              DateTime              @default(now())
+  technicalAssessmentIds String[]              @db.ObjectId
+  technicalAssessments   TechnicalAssessment[] @relation(fields: [technicalAssessmentIds], references: [id])
+
+  @@index([createdAt])
+}

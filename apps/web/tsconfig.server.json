@@ -1,0 +1,18 @@
+// in tsconfig.server.json
+
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    // --- THIS IS THE FIX ---
+    // Updated the target to a more modern version of JavaScript
+    "target": "es2020",
+    // --- END OF FIX ---
+    "outDir": "dist",
+    "noEmit": false,
+    "esModuleInterop": true,
+    "isolatedModules": false,
+    "moduleResolution": "node"
+  },
+  "include": ["server.ts", "lib/auth.ts"]
+}

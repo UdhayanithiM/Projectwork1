@@ -1,0 +1,701 @@
+Question Number,Question,Answer,Category,Difficulty
+1,What is the difference between compilation and interpretation?,Compilation translates source code into machine code creating an executable file. Interpretation translates and executes code line by line without an executable.,General Programming,Medium
+2,Explain the concept of polymorphism.,"Polymorphism allows objects of different classes to be treated as objects of a common superclass, enabling method overriding.",General Programming,Medium
+3,Define encapsulation and give an example.,"Encapsulation bundles data and methods in a class, restricting direct data access. Example: class with private data and public methods.",General Programming,Hard
+4,"What is an abstract class, and how is it different from an interface?",An abstract class can't be instantiated and can have abstract and concrete methods. An interface only has method signatures without implementations.,General Programming,Medium
+5,Describe the principles of Object-Oriented Programming (OOP).,"OOP principles include encapsulation, inheritance, polymorphism, and abstraction, promoting organized and maintainable code.",General Programming,Medium
+6,What is the purpose of a constructor?,"A constructor initializes object properties upon class instantiation, ensuring a well-defined state.",General Programming,Medium
+7,Explain the difference between stack and heap memory.,"Stack memory stores local variables and function calls; heap memory is for dynamic allocation. Stack operates in LIFO, heap managed manually or by garbage collection.",General Programming,Medium
+8,"What is a design pattern, and can you name a few?","Design patterns are solutions to common design problems. Examples: Singleton, Factory, Observer, MVC.",General Programming,Medium
+9,"Define the term ""DRY"" in software development.",DRY (Don't Repeat Yourself) advocates for avoiding code duplication by reusing existing code.,General Programming,Medium
+10,What is the SOLID principle?,"SOLID represents five design principles for OOP: Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion.",General Program,Hard
+11,What is the difference between an array and a linked list?,"An array has fixed size and stores elements in contiguous memory; a linked list consists of nodes with data and references, allowing dynamic size.",Data Structures,Easy
+12,Explain the time complexity of an algorithm.,"Time complexity measures the time an algorithm takes relative to its input size, expressed in Big O notation.",Data Structures,Hard
+13,Describe the difference between a binary search tree and a hash table.,"A binary search tree is hierarchical, maintaining order; a hash table maps keys to values for fast retrieval, without maintaining order.",Data Structures,Medium
+14,What is a linked list and how does it work?,"A linked list is a series of nodes each containing data and a reference to the next node, allowing dynamic memory allocation and efficient insertions/deletions.",Data Structures,Medium
+15,Explain the concept of recursion.,"Recursion is when a function calls itself to solve subproblems, with a base case to terminate recursion.",Data Structures,Medium
+16,"What is Big O notation, and why is it important?","Big O notation describes the upper bound of algorithm time complexity, important for comparing efficiency and growth rates.",Data Structures,Medium
+17,How do you perform a binary search on a sorted array?,"Binary search divides the search interval in half, repeatedly comparing the middle element to the target.",Data Structures,Hard
+18,Discuss the advantages and disadvantages of different sorting algorithms.,Sorting algorithms vary in time/space complexity and stability. Quick Sort and Merge Sort are fast but more complex; Insertion and Bubble Sort are simple but slower.,Data Structures,Medium
+19,Explain how a hash table works.,"A hash table uses a hash function to map keys to values in an array, allowing fast O(1) access.",Data Structures,Medium
+20,What is dynamic programming?,"Dynamic programming solves complex problems by dividing them into smaller subproblems, avoiding redundant calculations.",Data Structures,Hard
+21,What is the difference between Java and JavaScript?,"Java is a compiled, statically-typed language used for server-side, mobile, and desktop apps. JavaScript is an interpreted, dynamically-typed language for web development.",Languages and Frameworks,Medium
+22,Describe the MVC architectural pattern.,"MVC divides an application into Model (data), View (UI), and Controller (input handling), promoting separation of concerns.",Languages and Frameworks,Medium
+23,What is a RESTful API?,"RESTful API is a web service implementation using HTTP methods to perform CRUD operations on resources, adhering to stateless, client-server architecture.",Languages and Frameworks,Medium
+24,"Explain the use of ""this"" keyword in JavaScript.","""this"" in JavaScript refers to the execution context, varying based on function calling, global scope, or event handlers.",Languages and Frameworks,Medium
+25,What is a closure in programming?,A closure is a function with access to its outer scope variables even after the outer function has executed.,Languages and Frameworks,Medium
+26,What are the differences between Python 2 and Python 3?,"Python 3 has print as a function, true division, Unicode support by default, and different syntax for exceptions, unlike Python 2.",Languages and Frameworks,Medium
+27,Discuss the role of a package manager like npm or pip.,"Package managers manage installation, update, and dependency resolution of libraries, simplifying library management in development.",Languages and Frameworks,Hard
+28,Explain the concept of multi-threading in Java.,"Multi-threading in Java allows concurrent execution of multiple threads, improving application responsiveness and performance.",Languages and Frameworks,Medium
+29,What is a Singleton pattern?,"Singleton ensures a class has only one instance and provides a global access point to it, useful for shared resources.",Languages and Frameworks,Medium
+30,What is a virtual function in C++?,"Virtual functions in C++ allow derived classes to override them, enabling runtime polymorphism and dynamic method dispatch.",Languages and Frameworks,Medium
+31,"What is a database index, and why is it important?","A database index speeds up data retrieval, similar to a book's index, improving query performance.",Database and SQL,Medium
+32,Explain the differences between SQL and NoSQL databases.,SQL databases use structured query language with a predefined schema; NoSQL databases store schema-less data with flexible models.,Database and SQL,Medium
+33,What is a foreign key in a database?,"A foreign key links two tables by referring to the primary key in another table, ensuring referential integrity.",Database and SQL,Medium
+34,Describe the ACID properties in database transactions.,"ACID: Atomicity (indivisible transactions), Consistency (consistent state transitions), Isolation (independent transactions), Durability (persisted changes).",Database and SQL,Hard
+35,How do you optimize a SQL query for better performance?,"Optimize using indexes, efficient SQL, limiting data retrieval, analyzing query performance, and considering denormalization.",Database and SQL,Easy
+36,What is normalization in database design?,"Normalization organizes data into separate tables to reduce redundancy and improve integrity, following normalization forms.",Database and SQL,Hard
+37,Explain the difference between INNER JOIN and LEFT JOIN in SQL.,INNER JOIN returns matching rows from both tables; LEFT JOIN returns all rows from the left table and matching rows from the right.,Database and SQL,Medium
+38,"What is a stored procedure, and when would you use one?","Stored procedures are precompiled SQL statements for data manipulation and logic, used for repetitive tasks and improving performance.",Database and SQL,Medium
+39,"What is database denormalization, and when is it appropriate?","Denormalization introduces redundancy for performance, useful in read-heavy scenarios at the expense of storage and complexity.",Database and SQL,Medium
+40,Discuss the advantages and disadvantages of using an ORM tool.,ORM simplifies database interactions and is language-agnostic. It can introduce performance overhead and may limit database features.,Database and SQL,Medium
+41,What is the Document Object Model (DOM)?,"The DOM is a tree-like representation of a web page's structure, allowing manipulation of content, structure, and style via programming languages.",Web Development,Hard
+42,Explain the difference between HTTP and HTTPS.,"HTTP is an unsecured data transmission protocol; HTTPS is secure, encrypting data in transit using SSL/TLS.",Web Development,Medium
+43,What is CORS (Cross-Origin Resource Sharing)?,"CORS is a security measure allowing or restricting resources requested from another domain, managed via HTTP headers.",Web Development,Medium
+44,Describe the purpose of a web server like Apache or Nginx.,"Web servers handle HTTP requests, serve content, manage security, routing, and can act as reverse proxies for application servers.",Web Development,Medium
+45,"What is a cookie, and how does it work?","Cookies are data stored on the user's computer by the web server, sent with HTTP requests for session management, tracking, and storing preferences.",Web Development,Hard
+46,What is a session in web development?,"A session maintains stateful information across multiple HTTP requests, typically for user authentication and data storage.",Web Development,Medium
+47,Explain the concept of responsive web design.,"Responsive design ensures web content functions across different devices and screen sizes, using CSS media queries and flexible layouts.",Web Development,Medium
+48,Describe the differences between GET and POST requests.,"GET requests retrieve data and include parameters in the URL; POST requests send data to the server, encapsulating data in the request body.",Web Development,Medium
+49,What is the importance of SEO in web development?,"SEO enhances a website's visibility in search engine results, improving organic traffic and user reach through optimized content and structure.",Web Development,Medium
+50,How does a web browser render a web page?,"Browsers parse HTML to create a DOM, fetch resources, build a rendering tree, apply CSS, calculate layout, and paint the page on the screen.",Web Development,Medium
+51,"What is unit testing, and why is it important?","Unit testing evaluates individual code components, ensuring correctness and facilitating early defect detection.",Software Testing,Medium
+52,Explain the difference between black-box and white-box testing.,Black-box tests functionality without internal code knowledge; white-box tests internal code logic and structure.,Software Testing,Hard
+53,What is regression testing?,"Regression testing ensures new code changes don't break existing features, maintaining functionality over updates.",Software Testing,Easy
+54,Describe the purpose of code reviews.,"Code reviews identify defects, improve quality, enforce standards, and facilitate knowledge sharing.",Software Testing,Hard
+55,What is continuous integration (CI) and continuous delivery (CD)?,CI involves frequent code integration and testing; CD extends CI by deploying changes to production automatically after testing.,Software Testing,Medium
+56,Explain the concept of code coverage in testing.,"Code coverage measures the extent of code tested, assessing test thoroughness and identifying untested areas.",Software Testing,Medium
+57,What is a test case and how do you write one?,"A test case outlines test conditions, inputs, and expected results, structured with objective, steps, and documentation.",Software Testing,Medium
+58,"What is load testing, and why is it necessary?","Load testing evaluates system performance under expected load conditions, identifying bottlenecks and scalability issues.",Software Testing,Medium
+59,Describe the differences between manual and automated testing.,Manual testing is human-driven; suitable for exploratory and UX testing. Automated testing uses tools for repetitive tasks; suitable for regression and performance testing.,Software Testing,Hard
+60,What is a bug tracking system?,"A bug tracking system logs, manages, and resolves issues in software development, ensuring systematic problem handling.",Software Testing,Medium
+61,"What is Git, and how does it work?","Git is a distributed version control system for tracking changes in source code, allowing collaborative work and branch management.",Version Control,Medium
+62,Explain the difference between Git and SVN (Subversion).,"Git is distributed, with local repository copies; SVN is centralized, requiring network connectivity for repository access.",Version Control,Hard
+63,"What is a merge conflict, and how do you resolve it in Git?",Merge conflicts occur when changes in different branches clash. Resolve by manually editing files and committing the result.,Version Control,Medium
+64,Describe the purpose of branching in version control.,"Branching isolates development work without affecting other parts of the repository, aiding in feature development and experimentation.",Version Control,Medium
+65,"What is a pull request (PR), and how does it work?","A PR is a request to merge code from one branch to another, facilitating code review and discussion before integration.",Version Control,Medium
+66,How do you handle code conflicts in a team project?,"Resolve code conflicts through communication, careful review, manual merging, testing, and documenting resolutions.",Version Control,Medium
+67,"What is code refactoring, and why is it important?","Refactoring improves code structure and readability without altering functionality, enhancing maintainability and quality.",Version Control,Medium
+68,Explain the role of Git branching strategies like GitFlow.,"GitFlow organizes branches and releases, defining naming conventions and branch purposes for structured and organized development.",Version Control,Medium
+69,"What is Git rebase, and when would you use it?",Git rebase re-applies commits onto another base for a cleaner history. Use with caution to maintain a linear project history.,Version Control,Hard
+70,Discuss the advantages of distributed version control systems.,"Distributed systems allow offline work, flexible branching/merging, faster operations, redundancy, and collaborative workflows.",Version Control,Medium
+71,Describe the concept of microservices architecture.,"Microservices architecture consists of small, independent services communicating via APIs, each responsible for specific functionality, promoting scalability and maintenance.",System Design,Medium
+72,"What is a load balancer, and why is it used in web applications?","A load balancer distributes incoming traffic across servers, ensuring resource efficiency, fault tolerance, and high availability.",System Design,Medium
+73,Explain the importance of caching in web applications.,"Caching stores frequently accessed data for faster retrieval, reducing backend load, improving performance, and enhancing user experience.",System Design,Medium
+74,What is a CDN (Content Delivery Network)?,"A CDN is a network of servers for delivering content efficiently to users based on geographic proximity, reducing latency and load times.",System Design,Medium
+75,Discuss the pros and cons of monolithic vs. microservices architecture.,Monolithic is simple but less scalable; microservices offer scalability and flexibility but are complex to manage.,System Design,Medium
+76,What is a stateless vs. stateful service?,"Stateless services don't retain client data between requests; stateful services maintain client state, useful for sessions and transactions.",System Design,Hard
+77,Explain the concept of CAP theorem in distributed systems.,"The CAP theorem states that in a distributed system, you cannot simultaneously guarantee Consistency, Availability, and Partition Tolerance at all times.",System Design,Easy
+78,How do you ensure data consistency in a distributed database?,"Ensure consistency using strong consistency models, two-phase commits, optimistic concurrency control, and conflict resolution strategies.",System Design,Hard
+79,Describe the role of a reverse proxy in a web application.,"A reverse proxy routes client requests to appropriate servers, providing load balancing, SSL termination, caching, and security.",System Design,Medium
+80,"What is a message broker, and when would you use one?","A message broker facilitates communication in distributed systems through asynchronous messaging, used in event-driven architectures and high-volume scenarios.",System Design,Medium
+81,"What is SQL injection, and how can it be prevented?","SQL injection exploits vulnerabilities to execute malicious SQL. Prevent with parameterized queries, input validation, and least privilege access.",Security,Medium
+82,Explain the concept of Cross-Site Scripting (XSS).,"XSS injects malicious scripts into web apps, executed by users' browsers. Prevent with input validation, output encoding, and CSP.",Security,Medium
+83,What is two-factor authentication (2FA)?,2FA adds extra security by requiring two verification forms: something known (password) and something possessed (device).,Security,Hard
+84,Describe the process of password hashing and salting.,"Hashing transforms passwords into hashes using algorithms; salting adds randomness, enhancing security against attacks.",Security,Medium
+85,"What is OAuth, and how does it work?","OAuth allows third-party app access to user data without exposing credentials, using access tokens for authorization.",Security,Medium
+86,How do you protect against session fixation attacks?,"Protect by regenerating session IDs post-authentication, using unpredictable IDs, and tying IDs to user authentication.",Security,Medium
+87,Explain the principles of least privilege and defense in depth.,Least privilege limits access rights; defense in depth layers security. Both minimize attack surfaces and provide redundancy.,Security,Hard
+88,What is a DDoS (Distributed Denial of Service) attack?,"A DDoS attack overwhelms a target with traffic, causing unavailability. Mitigate with DDoS protection, rate limiting, and traffic analysis.",Security,Medium
+89,How can you secure sensitive data in a mobile app?,"Secure data by encrypting at rest and in transit, using secure authentication, and following best practices.",Security,Medium
+90,Discuss the importance of security in API design.,"API security is vital to protect data and prevent unauthorized access, using authentication, validation, rate limiting, and encryption.",Security,Medium
+91,"What is Docker, and how does it work?","Docker is a containerization platform packaging applications with dependencies, ensuring consistent environments across systems.",DevOps,Medium
+92,Explain the concept of container orchestration.,"Container orchestration automates deployment, scaling, and management of containers, optimizing resource use and handling failures.",DevOps,Medium
+93,"What is Kubernetes, and why is it popular in container management?","Kubernetes is an open-source container orchestration platform automating deployment and management, known for its scalability and community support.",DevOps,Medium
+94,Describe the process of continuous integration and continuous delivery (CI/CD).,"CI/CD automates build, test, and deployment processes, delivering code changes rapidly and reliably to production.",DevOps,Hard
+95,What is infrastructure as code (IaC)?,"IaC manages infrastructure using code, ensuring consistency, automation, and version control in deployments.",DevOps,Easy
+96,How do you monitor the performance of a web application?,"Monitor using tools to collect and analyze data on response times, resource utilization, error rates, and user experience.",DevOps,Hard
+97,Discuss the importance of automated testing in CI/CD pipelines.,"Automated testing in CI/CD ensures code changes are defect-free, enhancing reliability and speeding up delivery.",DevOps,Medium
+98,"What is Blue-Green deployment, and when would you use it?",Blue-Green deployment alternates between two production environments for easy rollbacks and minimal downtime during updates.,DevOps,Medium
+99,Explain the role of a configuration management tool like Ansible.,"Configuration management tools automate provisioning and management of software and infrastructure, ensuring consistency and efficiency.",DevOps,Medium
+100,"Describe the benefits of using a cloud platform like AWS, Azure, or Google Cloud.","Cloud platforms offer scalability, cost-efficiency, global reach, and managed services, reducing operational burdens with security and compliance features.",DevOps,Medium
+101,Explain the concept of 'closure' in JavaScript.,A closure is a function that remembers its outer variables and can access them.,Front-end,Hard
+102,Describe the use of Docker in a DevOps environment.,"Docker allows for packaging applications in containers, facilitating consistent deployment across different environments.",DevOps,Medium
+103,What is a 'race condition' in software development?,A race condition occurs when the system's behavior depends on the sequence or timing of other uncontrollable events.,Back-end,Medium
+104,How would you optimize a website's load time?,"Optimizations can include minimizing HTTP requests, using CDNs, compressing files, caching, etc.",Front-end,Hard
+105,What is the difference between SQL and NoSQL databases?,"SQL databases are structured, use SQL, and are better for complex queries. NoSQL databases are flexible, scale well, and are good for hierarchical data storage.",Back-end,Medium
+106,Can you explain the concept of 'state' in React?,State in React is an object that holds some information that may change over the lifecycle of the component.,Front-end,Medium
+107,What is continuous integration in DevOps?,Continuous integration is the practice of automating the integration of code changes into a software project.,DevOps,Medium
+108,How do you implement a binary search algorithm?,"Binary search involves repeatedly dividing in half the portion of the list that could contain the item, until you've narrowed the possibilities to just one.",Full-stack,Medium
+109,Describe the MVC architecture.,"MVC architecture stands for Model-View-Controller, separating the application into three interconnected components.",Full-stack,Medium
+110,What are microservices and how do they differ from monolithic architectures?,"Microservices are a software development techniquea variant of the service-oriented architecture architectural style that structures an application as a collection of loosely coupled services. In a monolithic architecture, all components are interconnected and interdependent.",Back-end,Medium
+111,Explain the difference between '==' and '===' in JavaScript.,"'==' compares values after type conversion, while '===' compares both value and type.",Front-end,Hard
+112,What is Kubernetes and how does it relate to containerization?,"Kubernetes is an open-source platform for automating deployment, scaling, and operations of application containers across clusters of hosts.",DevOps,Medium
+113,Describe how you would implement a RESTful API in a back-end application.,"A RESTful API is implemented by setting up HTTP routes (GET, POST, PUT, DELETE) and handling requests and responses in a stateless manner, often using JSON.",Back-end,Medium
+114,What are the benefits of server-side rendering vs client-side rendering?,"Server-side rendering improves initial page load time and SEO, while client-side rendering is good for dynamic websites with less initial loading content.",Front-end,Medium
+115,How do NoSQL databases handle data scaling compared to traditional SQL databases?,NoSQL databases are generally more scalable and provide superior performance for large-scale applications due to their flexibility in handling unstructured data.,Back-end,Medium
+116,Explain the use of hooks in React.,Hooks are functions that let you 'hook into' React state and lifecycle features from function components.,Front-end,Medium
+117,What is Infrastructure as Code (IaC) and its significance in DevOps?,"IaC is the management of infrastructure (networks, virtual machines, load balancers, etc.) in a descriptive model, using code, which increases development and deployment speed.",DevOps,Medium
+118,Describe the process of memoization in programming.,Memoization is an optimization technique used to speed up programs by storing the results of expensive function calls.,Full-stack,Hard
+119,What are the advantages of using a microservices architecture?,"Advantages include easier scalability, flexibility in choosing technology, better fault isolation, and improved continuous deployment.",Back-end,Easy
+120,Explain the SOLID principles in software engineering.,"SOLID stands for Single Responsibility, Open-Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion principles, guiding towards more maintainable, understandable, and flexible software.",Full-stack,Hard
+121,What is lazy loading in web development?,"Lazy loading is a design pattern that delays loading of non-critical resources at page load time, reducing initial load time and page weight.",Front-end,Medium
+122,Discuss the role of a load balancer in a distributed system.,A load balancer distributes network or application traffic across multiple servers to enhance responsiveness and availability of applications.,DevOps,Medium
+123,How does indexing improve database query performance?,"Indexing speeds up data retrieval operations by effectively creating a smaller, faster version of the database table.",Back-end,Medium
+124,Explain event delegation in JavaScript.,Event delegation refers to the practice of using a single event listener to manage all events of a specific type for child elements.,Front-end,Medium
+125,Explain the concept of 'closure' in JavaScript.,A closure is a function that remembers its outer variables and can access them.,Front-end,Hard
+126,Describe the use of Docker in a DevOps environment.,"Docker allows for packaging applications in containers, facilitating consistent deployment across different environments.",DevOps,Medium
+127,What is a 'race condition' in software development?,A race condition occurs when the system's behavior depends on the sequence or timing of other uncontrollable events.,Back-end,Hard
+128,How would you optimize a website's load time?,"Optimizations can include minimizing HTTP requests, using CDNs, compressing files, caching, etc.",Front-end,Medium
+129,What is the difference between SQL and NoSQL databases?,"SQL databases are structured, use SQL, and are better for complex queries. NoSQL databases are flexible, scale well, and are good for hierarchical data storage.",Back-end,Medium
+130,Can you explain the concept of 'state' in React?,State in React is an object that holds some information that may change over the lifecycle of the component.,Front-end,Medium
+131,What is continuous integration in DevOps?,Continuous integration is the practice of automating the integration of code changes into a software project.,DevOps,Medium
+132,How do you implement a binary search algorithm?,"Binary search involves repeatedly dividing in half the portion of the list that could contain the item, until you've narrowed the possibilities to just one.",Full-stack,Medium
+133,Describe the MVC architecture.,"MVC architecture stands for Model-View-Controller, separating the application into three interconnected components.",Full-stack,Medium
+134,What are microservices and how do they differ from monolithic architectures?,"Microservices are a software development techniquea variant of the service-oriented architecture architectural style that structures an application as a collection of loosely coupled services. In a monolithic architecture, all components are interconnected and interdependent.",Back-end,Hard
+135,Explain the difference between '==' and '===' in JavaScript.,"'==' compares values after type conversion, while '===' compares both value and type.",Front-end,Easy
+136,What is Kubernetes and how does it relate to containerization?,"Kubernetes is an open-source platform for automating deployment, scaling, and operations of application containers across clusters of hosts.",DevOps,Hard
+137,Describe how you would implement a RESTful API in a back-end application.,"A RESTful API is implemented by setting up HTTP routes (GET, POST, PUT, DELETE) and handling requests and responses in a stateless manner, often using JSON.",Back-end,Medium
+138,What are the benefits of server-side rendering vs client-side rendering?,"Server-side rendering improves initial page load time and SEO, while client-side rendering is good for dynamic websites with less initial loading content.",Front-end,Medium
+139,How do NoSQL databases handle data scaling compared to traditional SQL databases?,NoSQL databases are generally more scalable and provide superior performance for large-scale applications due to their flexibility in handling unstructured data.,Back-end,Medium
+140,Explain the use of hooks in React.,Hooks are functions that let you 'hook into' React state and lifecycle features from function components.,Front-end,Medium
+141,What is Infrastructure as Code (IaC) and its significance in DevOps?,"IaC is the management of infrastructure (networks, virtual machines, load balancers, etc.) in a descriptive model, using code, which increases development and deployment speed.",DevOps,Hard
+142,Describe the process of memoization in programming.,Memoization is an optimization technique used to speed up programs by storing the results of expensive function calls.,Full-stack,Medium
+143,What are the advantages of using a microservices architecture?,"Advantages include easier scalability, flexibility in choosing technology, better fault isolation, and improved continuous deployment.",Back-end,Medium
+144,Explain the SOLID principles in software engineering.,"SOLID stands for Single Responsibility, Open-Closed, Liskov Substitution, Interface Segregation, and Dependency Inversion principles, guiding towards more maintainable, understandable, and flexible software.",Full-stack,Hard
+145,What is lazy loading in web development?,"Lazy loading is a design pattern that delays loading of non-critical resources at page load time, reducing initial load time and page weight.",Front-end,Medium
+146,Discuss the role of a load balancer in a distributed system.,A load balancer distributes network or application traffic across multiple servers to enhance responsiveness and availability of applications.,DevOps,Medium
+147,How does indexing improve database query performance?,"Indexing speeds up data retrieval operations by effectively creating a smaller, faster version of the database table.",Back-end,Medium
+148,Explain event delegation in JavaScript.,Event delegation refers to the practice of using a single event listener to manage all events of a specific type for child elements.,Front-end,Medium
+149,Explain the concept of 'closure' in JavaScript.,A closure is a function that remembers its outer variables and can access them.,Front-end,Medium
+150,Describe the use of Docker in a DevOps environment.,"Docker allows for packaging applications in containers, facilitating consistent deployment across different environments.",DevOps,Medium
+151,Design a distributed key-value store.,"Focus on data partitioning, replication for fault tolerance, consistency models, and handling node failures.",System Design,Hard
+152,Implement a function to check if a binary tree is balanced.,Use a recursive function to check the height of each subtree; return false if the difference is more than one.,Algorithms,Hard
+153,Design a URL shortening service like bit.ly.,"Consider efficient hashing, collision resolution, database schema, scalability, and API rate limiting.",System Design,Hard
+154,Design a recommendation system for a large e-commerce platform.,"Use collaborative filtering, content-based filtering, or hybrid methods; consider scalability and real-time processing.",Machine Learning,Hard
+155,Write an algorithm to find the median of a stream of numbers.,"Use two heaps (max heap for lower half, min heap for upper half) to maintain the median.",Algorithms,Hard
+156,Explain the Raft consensus algorithm.,"Discuss leader election, log replication, safety, and how Raft achieves consensus in a distributed system.",Distributed Systems,Hard
+157,"Optimize a global, high-traffic content delivery network.","Use strategies like caching, edge locations, load balancing, and optimizing routing and data compression.",Networking,Hard
+158,Design a chat application that can scale to millions of users.,"Consider websocket protocol for real-time communication, efficient message broadcasting, and scalable backend architecture.",System Design,Hard
+159,Implement a garbage collector for a programming language.,"Understand memory management concepts like mark-and-sweep, reference counting, and generational collection.",Low-level Systems,Hard
+160,Design a scalable notification system for a social network.,"Focus on system architecture, push vs. pull models, handling peak loads, database optimization, and message queuing.",System Design,Hard
+161,Explain the workings of the TCP protocol for a low-latency network.,"Focus on the three-way handshake, congestion control (like TCP Fast Open, and CUBIC), and optimizing for reduced latency.",Networking,Hard
+162,Design and implement a concurrent hash map.,Implement with fine-grained locking or lock-free techniques to ensure thread safety and high concurrency.,Data Structures,Hard
+163,Find the Kth largest element in a stream of numbers.,"Utilize a min-heap to keep track of the K largest elements, ensuring efficient insertion and extraction.",Algorithms,Hard
+164,Implement Google's PageRank algorithm.,Use graph-based algorithms focusing on eigenvector calculation and iterative approaches.,Algorithms,Hard
+165,Design an API rate limiter for a web service.,"Use token bucket or leaky bucket algorithms, consider distributed storage for scalability.",System Design,Hard
+166,Optimize database queries for a high-traffic website.,"Focus on indexing, query optimization, using caching, database sharding, and efficient schema design.",Database Systems,Hard
+167,Create a secure and scalable authentication system for a web application.,"Implement OAuth for third-party integrations, use JWT for stateless authentication, and ensure protection against common security vulnerabilities.",Security,Hard
+168,Design a system for efficient storage and retrieval of large-scale time-series data.,"Optimize for write-heavy loads, use time-based partitioning, efficient indexing, and consider data compression techniques.",Database Systems,Hard
+169,Explain how a blockchain works and how to implement one.,"Focus on cryptographic hashing, decentralized consensus algorithms (like Proof of Work), and the maintenance of a distributed ledger.",Distributed Systems,Hard
+170,Design an efficient parking lot management system.,"Use object-oriented design principles, focus on efficiently handling different vehicle sizes, and optimizing space usage.",System Design,Hard
+171,Develop a machine learning model to predict stock prices.,"Consider time series analysis, regression models, and reinforcement learning; pay attention to features and data preprocessing.",Machine Learning,Hard
+172,Write a custom memory allocator for a C++ application.,"Discuss memory pool allocation, handling fragmentation, and optimizing for allocation/deallocation speed.",Low-level Systems,Hard
+173,Design a real-time multiplayer online game architecture.,"Focus on handling high network traffic, efficient state synchronization, latency reduction, and scalability.",System Design,Hard
+174,Implement a distributed file system.,"Address challenges in data distribution, replication, fault tolerance, consistency, and performance.",Distributed Systems,Hard
+175,Optimize a search algorithm for a large dataset in a distributed environment.,Implement distributed searching algorithms like MapReduce for scalability and efficiency.,Algorithms,Hard
+176,Design a data pipeline for processing big data in real-time.,"Utilize stream processing frameworks (like Apache Kafka, Spark Streaming), ensure fault tolerance, and manage backpressure.",Data Engineering,Hard
+177,Build a high-frequency trading system and discuss its components.,"Focus on low latency, high throughput, reliable data feeds, order execution systems, and concurrent algorithms.",System Design,Hard
+178,Develop a deep learning model to analyze and interpret medical images.,"Use convolutional neural networks, pay attention to dataset quality and preprocessing, and handle class imbalances.",Machine Learning,Hard
+179,Create an AI that can play a complex board game at a competitive level.,"Implement advanced AI techniques like Monte Carlo Tree Search, deep learning, and reinforcement learning.",Artificial Intelligence,Hard
+180,Design a fraud detection system for online transactions.,"Use machine learning for anomaly detection, implement rule-based systems for known fraud patterns, ensure real-time processing.",Security,Hard
+181,Implement a distributed graph processing framework.,"Discuss vertex-centric computation, message passing between nodes, and optimizations for large-scale processing.",Distributed Systems,Hard
+182,Design a global video streaming service like Netflix.,"Focus on CDN usage, adaptive bitrate streaming, content caching strategies, and handling peak traffic loads.",System Design,Hard
+183,Create a system to efficiently match job seekers with job postings.,"Use NLP for parsing resumes, implement ranking algorithms, and optimize for search and matching efficiency.",Algorithms,Hard
+184,Design and implement a large-scale distributed cache system.,"Consider consistency, data partitioning, eviction policies, and fault tolerance in distributed caching.",Distributed Systems,Hard
+185,Optimize network protocols for a satellite communication system.,"Address latency, data loss, and bandwidth issues; optimize for long-distance and high-latency networks.",Networking,Hard
+186,Develop an autonomous vehicle's path planning algorithm.,"Implement algorithms considering real-time obstacle avoidance, dynamic path adjustments, and efficient routing.",Algorithms,Hard
+187,Design a scalable and reliable messaging system for a large corporation.,"Utilize message queues (like Kafka, RabbitMQ), ensure fault tolerance, and implement load balancing.",System Design,Hard
+188,Implement a natural language processing algorithm to understand and answer user queries.,"Use NLP techniques like tokenization, parsing, and deep learning models for understanding and generating responses.",Machine Learning,Hard
+189,Create an efficient algorithm for real-time anomaly detection in network traffic.,Implement statistical models or machine learning algorithms to detect unusual patterns indicative of anomalies.,Algorithms,Hard
+190,Design a system to manage and process Internet of Things (IoT) data.,"Focus on handling large-scale data influx, real-time processing, data storage, and analytics.",System Design,Hard
+191,Build a compiler for a new programming language.,"Discuss lexical analysis, parsing, syntax tree generation, semantic analysis, and code generation.",Low-level Systems,Hard
+192,Implement a robust text editor with features like auto-complete and syntax highlighting.,"Consider efficient data structures for text storage (like gap buffers), and algorithms for syntax parsing.",Algorithms,Hard
+193,Design a scalable infrastructure for an online advertising platform.,"Focus on handling high-volume traffic, data analytics, ad targeting algorithms, and ensuring low-latency responses.",System Design,Hard
+194,Develop a machine learning algorithm to detect fake news on social media.,"Use NLP for text analysis, implement classification algorithms, and consider the challenge of unstructured data.",Machine Learning,Hard
+195,Optimize an SQL database for a high-volume financial transaction system.,"Focus on transaction isolation levels, indexing strategies, query optimization, and database sharding.",Database Systems,Hard
+196,Design a cloud-based virtual desktop infrastructure.,"Address virtualization technologies, resource allocation, security, and remote access protocols.",System Design,Hard
+197,Create a real-time sports analytics system using sensor data.,"Utilize streaming data processing, machine learning for pattern recognition, and efficient data storage solutions.",Data Engineering,Hard
+198,Implement a quantum algorithm for solving a well-known computational problem.,"Discuss quantum computing principles, qubit manipulation, and specific algorithms like Grover's or Shor's algorithm.",Algorithms,Hard
+199,Design a secure mobile payment system for developing countries.,"Focus on security protocols, offline capabilities, user authentication, and low-resource optimizations.",Security,Hard
+200,Build a scalable image processing pipeline for a photo-sharing app.,"Implement distributed processing, efficient storage, and consider ML techniques for feature extraction.",System Design,Hard
+201,Sample AI/ML Question 201: Explain concept 1?,This is the answer for AI/ML concept 1.,AI/ML,Hard
+202,Sample AI/ML Question 202: Explain concept 2?,This is the answer for AI/ML concept 2.,AI/ML,Hard
+203,Sample AI/ML Question 203: Explain concept 3?,This is the answer for AI/ML concept 3.,AI/ML,Hard
+204,Sample AI/ML Question 204: Explain concept 4?,This is the answer for AI/ML concept 4.,AI/ML,Hard
+205,Sample AI/ML Question 205: Explain concept 5?,This is the answer for AI/ML concept 5.,AI/ML,Hard
+206,Sample AI/ML Question 206: Explain concept 6?,This is the answer for AI/ML concept 6.,AI/ML,Hard
+207,Sample AI/ML Question 207: Explain concept 7?,This is the answer for AI/ML concept 7.,AI/ML,Hard
+208,Sample AI/ML Question 208: Explain concept 8?,This is the answer for AI/ML concept 8.,AI/ML,Hard
+209,Sample AI/ML Question 209: Explain concept 9?,This is the answer for AI/ML concept 9.,AI/ML,Hard
+210,Sample AI/ML Question 210: Explain concept 10?,This is the answer for AI/ML concept 10.,AI/ML,Hard
+211,Sample AI/ML Question 211: Explain concept 11?,This is the answer for AI/ML concept 11.,AI/ML,Hard
+212,Sample AI/ML Question 212: Explain concept 12?,This is the answer for AI/ML concept 12.,AI/ML,Hard
+213,Sample AI/ML Question 213: Explain concept 13?,This is the answer for AI/ML concept 13.,AI/ML,Hard
+214,Sample AI/ML Question 214: Explain concept 14?,This is the answer for AI/ML concept 14.,AI/ML,Hard
+215,Sample AI/ML Question 215: Explain concept 15?,This is the answer for AI/ML concept 15.,AI/ML,Hard
+216,Sample AI/ML Question 216: Explain concept 16?,This is the answer for AI/ML concept 16.,AI/ML,Hard
+217,Sample AI/ML Question 217: Explain concept 17?,This is the answer for AI/ML concept 17.,AI/ML,Hard
+218,Sample AI/ML Question 218: Explain concept 18?,This is the answer for AI/ML concept 18.,AI/ML,Hard
+219,Sample AI/ML Question 219: Explain concept 19?,This is the answer for AI/ML concept 19.,AI/ML,Hard
+220,Sample AI/ML Question 220: Explain concept 20?,This is the answer for AI/ML concept 20.,AI/ML,Hard
+221,Sample AI/ML Question 221: Explain concept 21?,This is the answer for AI/ML concept 21.,AI/ML,Hard
+222,Sample AI/ML Question 222: Explain concept 22?,This is the answer for AI/ML concept 22.,AI/ML,Hard
+223,Sample AI/ML Question 223: Explain concept 23?,This is the answer for AI/ML concept 23.,AI/ML,Hard
+224,Sample AI/ML Question 224: Explain concept 24?,This is the answer for AI/ML concept 24.,AI/ML,Hard
+225,Sample AI/ML Question 225: Explain concept 25?,This is the answer for AI/ML concept 25.,AI/ML,Hard
+226,Sample AI/ML Question 226: Explain concept 26?,This is the answer for AI/ML concept 26.,AI/ML,Hard
+227,Sample AI/ML Question 227: Explain concept 27?,This is the answer for AI/ML concept 27.,AI/ML,Hard
+228,Sample AI/ML Question 228: Explain concept 28?,This is the answer for AI/ML concept 28.,AI/ML,Hard
+229,Sample AI/ML Question 229: Explain concept 29?,This is the answer for AI/ML concept 29.,AI/ML,Hard
+230,Sample AI/ML Question 230: Explain concept 30?,This is the answer for AI/ML concept 30.,AI/ML,Hard
+231,Sample AI/ML Question 231: Explain concept 31?,This is the answer for AI/ML concept 31.,AI/ML,Hard
+232,Sample AI/ML Question 232: Explain concept 32?,This is the answer for AI/ML concept 32.,AI/ML,Hard
+233,Sample AI/ML Question 233: Explain concept 33?,This is the answer for AI/ML concept 33.,AI/ML,Hard
+234,Sample AI/ML Question 234: Explain concept 34?,This is the answer for AI/ML concept 34.,AI/ML,Hard
+235,Sample AI/ML Question 235: Explain concept 35?,This is the answer for AI/ML concept 35.,AI/ML,Hard
+236,Sample AI/ML Question 236: Explain concept 36?,This is the answer for AI/ML concept 36.,AI/ML,Hard
+237,Sample AI/ML Question 237: Explain concept 37?,This is the answer for AI/ML concept 37.,AI/ML,Hard
+238,Sample AI/ML Question 238: Explain concept 38?,This is the answer for AI/ML concept 38.,AI/ML,Hard
+239,Sample AI/ML Question 239: Explain concept 39?,This is the answer for AI/ML concept 39.,AI/ML,Hard
+240,Sample AI/ML Question 240: Explain concept 40?,This is the answer for AI/ML concept 40.,AI/ML,Hard
+241,Sample AI/ML Question 241: Explain concept 41?,This is the answer for AI/ML concept 41.,AI/ML,Hard
+242,Sample AI/ML Question 242: Explain concept 42?,This is the answer for AI/ML concept 42.,AI/ML,Hard
+243,Sample AI/ML Question 243: Explain concept 43?,This is the answer for AI/ML concept 43.,AI/ML,Hard
+244,Sample AI/ML Question 244: Explain concept 44?,This is the answer for AI/ML concept 44.,AI/ML,Hard
+245,Sample AI/ML Question 245: Explain concept 45?,This is the answer for AI/ML concept 45.,AI/ML,Hard
+246,Sample AI/ML Question 246: Explain concept 46?,This is the answer for AI/ML concept 46.,AI/ML,Hard
+247,Sample AI/ML Question 247: Explain concept 47?,This is the answer for AI/ML concept 47.,AI/ML,Hard
+248,Sample AI/ML Question 248: Explain concept 48?,This is the answer for AI/ML concept 48.,AI/ML,Hard
+249,Sample AI/ML Question 249: Explain concept 49?,This is the answer for AI/ML concept 49.,AI/ML,Hard
+250,Sample AI/ML Question 250: Explain concept 50?,This is the answer for AI/ML concept 50.,AI/ML,Hard
+251,Sample AI/ML Question 251: Explain concept 51?,This is the answer for AI/ML concept 51.,AI/ML,Hard
+252,Sample AI/ML Question 252: Explain concept 52?,This is the answer for AI/ML concept 52.,AI/ML,Hard
+253,Sample AI/ML Question 253: Explain concept 53?,This is the answer for AI/ML concept 53.,AI/ML,Hard
+254,Sample AI/ML Question 254: Explain concept 54?,This is the answer for AI/ML concept 54.,AI/ML,Hard
+255,Sample AI/ML Question 255: Explain concept 55?,This is the answer for AI/ML concept 55.,AI/ML,Hard
+256,Sample AI/ML Question 256: Explain concept 56?,This is the answer for AI/ML concept 56.,AI/ML,Hard
+257,Sample AI/ML Question 257: Explain concept 57?,This is the answer for AI/ML concept 57.,AI/ML,Hard
+258,Sample AI/ML Question 258: Explain concept 58?,This is the answer for AI/ML concept 58.,AI/ML,Hard
+259,Sample AI/ML Question 259: Explain concept 59?,This is the answer for AI/ML concept 59.,AI/ML,Hard
+260,Sample AI/ML Question 260: Explain concept 60?,This is the answer for AI/ML concept 60.,AI/ML,Hard
+261,Sample AI/ML Question 261: Explain concept 61?,This is the answer for AI/ML concept 61.,AI/ML,Hard
+262,Sample AI/ML Question 262: Explain concept 62?,This is the answer for AI/ML concept 62.,AI/ML,Hard
+263,Sample AI/ML Question 263: Explain concept 63?,This is the answer for AI/ML concept 63.,AI/ML,Hard
+264,Sample AI/ML Question 264: Explain concept 64?,This is the answer for AI/ML concept 64.,AI/ML,Hard
+265,Sample AI/ML Question 265: Explain concept 65?,This is the answer for AI/ML concept 65.,AI/ML,Hard
+266,Sample AI/ML Question 266: Explain concept 66?,This is the answer for AI/ML concept 66.,AI/ML,Hard
+267,Sample AI/ML Question 267: Explain concept 67?,This is the answer for AI/ML concept 67.,AI/ML,Hard
+268,Sample AI/ML Question 268: Explain concept 68?,This is the answer for AI/ML concept 68.,AI/ML,Hard
+269,Sample AI/ML Question 269: Explain concept 69?,This is the answer for AI/ML concept 69.,AI/ML,Hard
+270,Sample AI/ML Question 270: Explain concept 70?,This is the answer for AI/ML concept 70.,AI/ML,Hard
+271,Sample AI/ML Question 271: Explain concept 71?,This is the answer for AI/ML concept 71.,AI/ML,Hard
+272,Sample AI/ML Question 272: Explain concept 72?,This is the answer for AI/ML concept 72.,AI/ML,Hard
+273,Sample AI/ML Question 273: Explain concept 73?,This is the answer for AI/ML concept 73.,AI/ML,Hard
+274,Sample AI/ML Question 274: Explain concept 74?,This is the answer for AI/ML concept 74.,AI/ML,Hard
+275,Sample AI/ML Question 275: Explain concept 75?,This is the answer for AI/ML concept 75.,AI/ML,Hard
+276,Sample AI/ML Question 276: Explain concept 76?,This is the answer for AI/ML concept 76.,AI/ML,Hard
+277,Sample AI/ML Question 277: Explain concept 77?,This is the answer for AI/ML concept 77.,AI/ML,Hard
+278,Sample AI/ML Question 278: Explain concept 78?,This is the answer for AI/ML concept 78.,AI/ML,Hard
+279,Sample AI/ML Question 279: Explain concept 79?,This is the answer for AI/ML concept 79.,AI/ML,Hard
+280,Sample AI/ML Question 280: Explain concept 80?,This is the answer for AI/ML concept 80.,AI/ML,Hard
+281,Sample AI/ML Question 281: Explain concept 81?,This is the answer for AI/ML concept 81.,AI/ML,Hard
+282,Sample AI/ML Question 282: Explain concept 82?,This is the answer for AI/ML concept 82.,AI/ML,Hard
+283,Sample AI/ML Question 283: Explain concept 83?,This is the answer for AI/ML concept 83.,AI/ML,Hard
+284,Sample AI/ML Question 284: Explain concept 84?,This is the answer for AI/ML concept 84.,AI/ML,Hard
+285,Sample AI/ML Question 285: Explain concept 85?,This is the answer for AI/ML concept 85.,AI/ML,Hard
+286,Sample AI/ML Question 286: Explain concept 86?,This is the answer for AI/ML concept 86.,AI/ML,Hard
+287,Sample AI/ML Question 287: Explain concept 87?,This is the answer for AI/ML concept 87.,AI/ML,Hard
+288,Sample AI/ML Question 288: Explain concept 88?,This is the answer for AI/ML concept 88.,AI/ML,Hard
+289,Sample AI/ML Question 289: Explain concept 89?,This is the answer for AI/ML concept 89.,AI/ML,Hard
+290,Sample AI/ML Question 290: Explain concept 90?,This is the answer for AI/ML concept 90.,AI/ML,Hard
+291,Sample AI/ML Question 291: Explain concept 91?,This is the answer for AI/ML concept 91.,AI/ML,Hard
+292,Sample AI/ML Question 292: Explain concept 92?,This is the answer for AI/ML concept 92.,AI/ML,Hard
+293,Sample AI/ML Question 293: Explain concept 93?,This is the answer for AI/ML concept 93.,AI/ML,Hard
+294,Sample AI/ML Question 294: Explain concept 94?,This is the answer for AI/ML concept 94.,AI/ML,Hard
+295,Sample AI/ML Question 295: Explain concept 95?,This is the answer for AI/ML concept 95.,AI/ML,Hard
+296,Sample AI/ML Question 296: Explain concept 96?,This is the answer for AI/ML concept 96.,AI/ML,Hard
+297,Sample AI/ML Question 297: Explain concept 97?,This is the answer for AI/ML concept 97.,AI/ML,Hard
+298,Sample AI/ML Question 298: Explain concept 98?,This is the answer for AI/ML concept 98.,AI/ML,Hard
+299,Sample AI/ML Question 299: Explain concept 99?,This is the answer for AI/ML concept 99.,AI/ML,Hard
+300,Sample AI/ML Question 300: Explain concept 100?,This is the answer for AI/ML concept 100.,AI/ML,Hard
+301,Sample AI/ML Question 301: Explain concept 101?,This is the answer for AI/ML concept 101.,AI/ML,Hard
+302,Sample AI/ML Question 302: Explain concept 102?,This is the answer for AI/ML concept 102.,AI/ML,Hard
+303,Sample AI/ML Question 303: Explain concept 103?,This is the answer for AI/ML concept 103.,AI/ML,Hard
+304,Sample AI/ML Question 304: Explain concept 104?,This is the answer for AI/ML concept 104.,AI/ML,Hard
+305,Sample AI/ML Question 305: Explain concept 105?,This is the answer for AI/ML concept 105.,AI/ML,Hard
+306,Sample AI/ML Question 306: Explain concept 106?,This is the answer for AI/ML concept 106.,AI/ML,Hard
+307,Sample AI/ML Question 307: Explain concept 107?,This is the answer for AI/ML concept 107.,AI/ML,Hard
+308,Sample AI/ML Question 308: Explain concept 108?,This is the answer for AI/ML concept 108.,AI/ML,Hard
+309,Sample AI/ML Question 309: Explain concept 109?,This is the answer for AI/ML concept 109.,AI/ML,Hard
+310,Sample AI/ML Question 310: Explain concept 110?,This is the answer for AI/ML concept 110.,AI/ML,Hard
+311,Sample AI/ML Question 311: Explain concept 111?,This is the answer for AI/ML concept 111.,AI/ML,Hard
+312,Sample AI/ML Question 312: Explain concept 112?,This is the answer for AI/ML concept 112.,AI/ML,Hard
+313,Sample AI/ML Question 313: Explain concept 113?,This is the answer for AI/ML concept 113.,AI/ML,Hard
+314,Sample AI/ML Question 314: Explain concept 114?,This is the answer for AI/ML concept 114.,AI/ML,Hard
+315,Sample AI/ML Question 315: Explain concept 115?,This is the answer for AI/ML concept 115.,AI/ML,Hard
+316,Sample AI/ML Question 316: Explain concept 116?,This is the answer for AI/ML concept 116.,AI/ML,Hard
+317,Sample AI/ML Question 317: Explain concept 117?,This is the answer for AI/ML concept 117.,AI/ML,Hard
+318,Sample AI/ML Question 318: Explain concept 118?,This is the answer for AI/ML concept 118.,AI/ML,Hard
+319,Sample AI/ML Question 319: Explain concept 119?,This is the answer for AI/ML concept 119.,AI/ML,Hard
+320,Sample AI/ML Question 320: Explain concept 120?,This is the answer for AI/ML concept 120.,AI/ML,Hard
+321,Sample AI/ML Question 321: Explain concept 121?,This is the answer for AI/ML concept 121.,AI/ML,Hard
+322,Sample AI/ML Question 322: Explain concept 122?,This is the answer for AI/ML concept 122.,AI/ML,Hard
+323,Sample AI/ML Question 323: Explain concept 123?,This is the answer for AI/ML concept 123.,AI/ML,Hard
+324,Sample AI/ML Question 324: Explain concept 124?,This is the answer for AI/ML concept 124.,AI/ML,Hard
+325,Sample AI/ML Question 325: Explain concept 125?,This is the answer for AI/ML concept 125.,AI/ML,Hard
+326,Sample AI/ML Question 326: Explain concept 126?,This is the answer for AI/ML concept 126.,AI/ML,Hard
+327,Sample AI/ML Question 327: Explain concept 127?,This is the answer for AI/ML concept 127.,AI/ML,Hard
+328,Sample AI/ML Question 328: Explain concept 128?,This is the answer for AI/ML concept 128.,AI/ML,Hard
+329,Sample AI/ML Question 329: Explain concept 129?,This is the answer for AI/ML concept 129.,AI/ML,Hard
+330,Sample AI/ML Question 330: Explain concept 130?,This is the answer for AI/ML concept 130.,AI/ML,Hard
+331,Sample AI/ML Question 331: Explain concept 131?,This is the answer for AI/ML concept 131.,AI/ML,Hard
+332,Sample AI/ML Question 332: Explain concept 132?,This is the answer for AI/ML concept 132.,AI/ML,Hard
+333,Sample AI/ML Question 333: Explain concept 133?,This is the answer for AI/ML concept 133.,AI/ML,Hard
+334,Sample AI/ML Question 334: Explain concept 134?,This is the answer for AI/ML concept 134.,AI/ML,Hard
+335,Sample AI/ML Question 335: Explain concept 135?,This is the answer for AI/ML concept 135.,AI/ML,Hard
+336,Sample AI/ML Question 336: Explain concept 136?,This is the answer for AI/ML concept 136.,AI/ML,Hard
+337,Sample AI/ML Question 337: Explain concept 137?,This is the answer for AI/ML concept 137.,AI/ML,Hard
+338,Sample AI/ML Question 338: Explain concept 138?,This is the answer for AI/ML concept 138.,AI/ML,Hard
+339,Sample AI/ML Question 339: Explain concept 139?,This is the answer for AI/ML concept 139.,AI/ML,Hard
+340,Sample AI/ML Question 340: Explain concept 140?,This is the answer for AI/ML concept 140.,AI/ML,Hard
+341,Sample AI/ML Question 341: Explain concept 141?,This is the answer for AI/ML concept 141.,AI/ML,Hard
+342,Sample AI/ML Question 342: Explain concept 142?,This is the answer for AI/ML concept 142.,AI/ML,Hard
+343,Sample AI/ML Question 343: Explain concept 143?,This is the answer for AI/ML concept 143.,AI/ML,Hard
+344,Sample AI/ML Question 344: Explain concept 144?,This is the answer for AI/ML concept 144.,AI/ML,Hard
+345,Sample AI/ML Question 345: Explain concept 145?,This is the answer for AI/ML concept 145.,AI/ML,Hard
+346,Sample AI/ML Question 346: Explain concept 146?,This is the answer for AI/ML concept 146.,AI/ML,Hard
+347,Sample AI/ML Question 347: Explain concept 147?,This is the answer for AI/ML concept 147.,AI/ML,Hard
+348,Sample AI/ML Question 348: Explain concept 148?,This is the answer for AI/ML concept 148.,AI/ML,Hard
+349,Sample AI/ML Question 349: Explain concept 149?,This is the answer for AI/ML concept 149.,AI/ML,Hard
+350,Sample AI/ML Question 350: Explain concept 150?,This is the answer for AI/ML concept 150.,AI/ML,Hard
+351,Sample AI/ML Question 351: Explain concept 151?,This is the answer for AI/ML concept 151.,AI/ML,Hard
+352,Sample AI/ML Question 352: Explain concept 152?,This is the answer for AI/ML concept 152.,AI/ML,Hard
+353,Sample AI/ML Question 353: Explain concept 153?,This is the answer for AI/ML concept 153.,AI/ML,Hard
+354,Sample AI/ML Question 354: Explain concept 154?,This is the answer for AI/ML concept 154.,AI/ML,Hard
+355,Sample AI/ML Question 355: Explain concept 155?,This is the answer for AI/ML concept 155.,AI/ML,Hard
+356,Sample AI/ML Question 356: Explain concept 156?,This is the answer for AI/ML concept 156.,AI/ML,Hard
+357,Sample AI/ML Question 357: Explain concept 157?,This is the answer for AI/ML concept 157.,AI/ML,Hard
+358,Sample AI/ML Question 358: Explain concept 158?,This is the answer for AI/ML concept 158.,AI/ML,Hard
+359,Sample AI/ML Question 359: Explain concept 159?,This is the answer for AI/ML concept 159.,AI/ML,Hard
+360,Sample AI/ML Question 360: Explain concept 160?,This is the answer for AI/ML concept 160.,AI/ML,Hard
+361,Sample AI/ML Question 361: Explain concept 161?,This is the answer for AI/ML concept 161.,AI/ML,Hard
+362,Sample AI/ML Question 362: Explain concept 162?,This is the answer for AI/ML concept 162.,AI/ML,Hard
+363,Sample AI/ML Question 363: Explain concept 163?,This is the answer for AI/ML concept 163.,AI/ML,Hard
+364,Sample AI/ML Question 364: Explain concept 164?,This is the answer for AI/ML concept 164.,AI/ML,Hard
+365,Sample AI/ML Question 365: Explain concept 165?,This is the answer for AI/ML concept 165.,AI/ML,Hard
+366,Sample AI/ML Question 366: Explain concept 166?,This is the answer for AI/ML concept 166.,AI/ML,Hard
+367,Sample AI/ML Question 367: Explain concept 167?,This is the answer for AI/ML concept 167.,AI/ML,Hard
+368,Sample AI/ML Question 368: Explain concept 168?,This is the answer for AI/ML concept 168.,AI/ML,Hard
+369,Sample AI/ML Question 369: Explain concept 169?,This is the answer for AI/ML concept 169.,AI/ML,Hard
+370,Sample AI/ML Question 370: Explain concept 170?,This is the answer for AI/ML concept 170.,AI/ML,Hard
+371,Sample AI/ML Question 371: Explain concept 171?,This is the answer for AI/ML concept 171.,AI/ML,Hard
+372,Sample AI/ML Question 372: Explain concept 172?,This is the answer for AI/ML concept 172.,AI/ML,Hard
+373,Sample AI/ML Question 373: Explain concept 173?,This is the answer for AI/ML concept 173.,AI/ML,Hard
+374,Sample AI/ML Question 374: Explain concept 174?,This is the answer for AI/ML concept 174.,AI/ML,Hard
+375,Sample AI/ML Question 375: Explain concept 175?,This is the answer for AI/ML concept 175.,AI/ML,Hard
+376,Sample AI/ML Question 376: Explain concept 176?,This is the answer for AI/ML concept 176.,AI/ML,Hard
+377,Sample AI/ML Question 377: Explain concept 177?,This is the answer for AI/ML concept 177.,AI/ML,Hard
+378,Sample AI/ML Question 378: Explain concept 178?,This is the answer for AI/ML concept 178.,AI/ML,Hard
+379,Sample AI/ML Question 379: Explain concept 179?,This is the answer for AI/ML concept 179.,AI/ML,Hard
+380,Sample AI/ML Question 380: Explain concept 180?,This is the answer for AI/ML concept 180.,AI/ML,Hard
+381,Sample AI/ML Question 381: Explain concept 181?,This is the answer for AI/ML concept 181.,AI/ML,Hard
+382,Sample AI/ML Question 382: Explain concept 182?,This is the answer for AI/ML concept 182.,AI/ML,Hard
+383,Sample AI/ML Question 383: Explain concept 183?,This is the answer for AI/ML concept 183.,AI/ML,Hard
+384,Sample AI/ML Question 384: Explain concept 184?,This is the answer for AI/ML concept 184.,AI/ML,Hard
+385,Sample AI/ML Question 385: Explain concept 185?,This is the answer for AI/ML concept 185.,AI/ML,Hard
+386,Sample AI/ML Question 386: Explain concept 186?,This is the answer for AI/ML concept 186.,AI/ML,Hard
+387,Sample AI/ML Question 387: Explain concept 187?,This is the answer for AI/ML concept 187.,AI/ML,Hard
+388,Sample AI/ML Question 388: Explain concept 188?,This is the answer for AI/ML concept 188.,AI/ML,Hard
+389,Sample AI/ML Question 389: Explain concept 189?,This is the answer for AI/ML concept 189.,AI/ML,Hard
+390,Sample AI/ML Question 390: Explain concept 190?,This is the answer for AI/ML concept 190.,AI/ML,Hard
+391,Sample AI/ML Question 391: Explain concept 191?,This is the answer for AI/ML concept 191.,AI/ML,Hard
+392,Sample AI/ML Question 392: Explain concept 192?,This is the answer for AI/ML concept 192.,AI/ML,Hard
+393,Sample AI/ML Question 393: Explain concept 193?,This is the answer for AI/ML concept 193.,AI/ML,Hard
+394,Sample AI/ML Question 394: Explain concept 194?,This is the answer for AI/ML concept 194.,AI/ML,Hard
+395,Sample AI/ML Question 395: Explain concept 195?,This is the answer for AI/ML concept 195.,AI/ML,Hard
+396,Sample AI/ML Question 396: Explain concept 196?,This is the answer for AI/ML concept 196.,AI/ML,Hard
+397,Sample AI/ML Question 397: Explain concept 197?,This is the answer for AI/ML concept 197.,AI/ML,Hard
+398,Sample AI/ML Question 398: Explain concept 198?,This is the answer for AI/ML concept 198.,AI/ML,Hard
+399,Sample AI/ML Question 399: Explain concept 199?,This is the answer for AI/ML concept 199.,AI/ML,Hard
+400,Sample AI/ML Question 400: Explain concept 200?,This is the answer for AI/ML concept 200.,AI/ML,Hard
+401,Sample AI/ML Question 401: Explain concept 201?,This is the answer for AI/ML concept 201.,AI/ML,Hard
+402,Sample AI/ML Question 402: Explain concept 202?,This is the answer for AI/ML concept 202.,AI/ML,Hard
+403,Sample AI/ML Question 403: Explain concept 203?,This is the answer for AI/ML concept 203.,AI/ML,Hard
+404,Sample AI/ML Question 404: Explain concept 204?,This is the answer for AI/ML concept 204.,AI/ML,Hard
+405,Sample AI/ML Question 405: Explain concept 205?,This is the answer for AI/ML concept 205.,AI/ML,Hard
+406,Sample AI/ML Question 406: Explain concept 206?,This is the answer for AI/ML concept 206.,AI/ML,Hard
+407,Sample AI/ML Question 407: Explain concept 207?,This is the answer for AI/ML concept 207.,AI/ML,Hard
+408,Sample AI/ML Question 408: Explain concept 208?,This is the answer for AI/ML concept 208.,AI/ML,Hard
+409,Sample AI/ML Question 409: Explain concept 209?,This is the answer for AI/ML concept 209.,AI/ML,Hard
+410,Sample AI/ML Question 410: Explain concept 210?,This is the answer for AI/ML concept 210.,AI/ML,Hard
+411,Sample AI/ML Question 411: Explain concept 211?,This is the answer for AI/ML concept 211.,AI/ML,Hard
+412,Sample AI/ML Question 412: Explain concept 212?,This is the answer for AI/ML concept 212.,AI/ML,Hard
+413,Sample AI/ML Question 413: Explain concept 213?,This is the answer for AI/ML concept 213.,AI/ML,Hard
+414,Sample AI/ML Question 414: Explain concept 214?,This is the answer for AI/ML concept 214.,AI/ML,Hard
+415,Sample AI/ML Question 415: Explain concept 215?,This is the answer for AI/ML concept 215.,AI/ML,Hard
+416,Sample AI/ML Question 416: Explain concept 216?,This is the answer for AI/ML concept 216.,AI/ML,Hard
+417,Sample AI/ML Question 417: Explain concept 217?,This is the answer for AI/ML concept 217.,AI/ML,Hard
+418,Sample AI/ML Question 418: Explain concept 218?,This is the answer for AI/ML concept 218.,AI/ML,Hard
+419,Sample AI/ML Question 419: Explain concept 219?,This is the answer for AI/ML concept 219.,AI/ML,Hard
+420,Sample AI/ML Question 420: Explain concept 220?,This is the answer for AI/ML concept 220.,AI/ML,Hard
+421,Sample AI/ML Question 421: Explain concept 221?,This is the answer for AI/ML concept 221.,AI/ML,Hard
+422,Sample AI/ML Question 422: Explain concept 222?,This is the answer for AI/ML concept 222.,AI/ML,Hard
+423,Sample AI/ML Question 423: Explain concept 223?,This is the answer for AI/ML concept 223.,AI/ML,Hard
+424,Sample AI/ML Question 424: Explain concept 224?,This is the answer for AI/ML concept 224.,AI/ML,Hard
+425,Sample AI/ML Question 425: Explain concept 225?,This is the answer for AI/ML concept 225.,AI/ML,Hard
+426,Sample AI/ML Question 426: Explain concept 226?,This is the answer for AI/ML concept 226.,AI/ML,Hard
+427,Sample AI/ML Question 427: Explain concept 227?,This is the answer for AI/ML concept 227.,AI/ML,Hard
+428,Sample AI/ML Question 428: Explain concept 228?,This is the answer for AI/ML concept 228.,AI/ML,Hard
+429,Sample AI/ML Question 429: Explain concept 229?,This is the answer for AI/ML concept 229.,AI/ML,Hard
+430,Sample AI/ML Question 430: Explain concept 230?,This is the answer for AI/ML concept 230.,AI/ML,Hard
+431,Sample AI/ML Question 431: Explain concept 231?,This is the answer for AI/ML concept 231.,AI/ML,Hard
+432,Sample AI/ML Question 432: Explain concept 232?,This is the answer for AI/ML concept 232.,AI/ML,Hard
+433,Sample AI/ML Question 433: Explain concept 233?,This is the answer for AI/ML concept 233.,AI/ML,Hard
+434,Sample AI/ML Question 434: Explain concept 234?,This is the answer for AI/ML concept 234.,AI/ML,Hard
+435,Sample AI/ML Question 435: Explain concept 235?,This is the answer for AI/ML concept 235.,AI/ML,Hard
+436,Sample AI/ML Question 436: Explain concept 236?,This is the answer for AI/ML concept 236.,AI/ML,Hard
+437,Sample AI/ML Question 437: Explain concept 237?,This is the answer for AI/ML concept 237.,AI/ML,Hard
+438,Sample AI/ML Question 438: Explain concept 238?,This is the answer for AI/ML concept 238.,AI/ML,Hard
+439,Sample AI/ML Question 439: Explain concept 239?,This is the answer for AI/ML concept 239.,AI/ML,Hard
+440,Sample AI/ML Question 440: Explain concept 240?,This is the answer for AI/ML concept 240.,AI/ML,Hard
+441,Sample AI/ML Question 441: Explain concept 241?,This is the answer for AI/ML concept 241.,AI/ML,Hard
+442,Sample AI/ML Question 442: Explain concept 242?,This is the answer for AI/ML concept 242.,AI/ML,Hard
+443,Sample AI/ML Question 443: Explain concept 243?,This is the answer for AI/ML concept 243.,AI/ML,Hard
+444,Sample AI/ML Question 444: Explain concept 244?,This is the answer for AI/ML concept 244.,AI/ML,Hard
+445,Sample AI/ML Question 445: Explain concept 245?,This is the answer for AI/ML concept 245.,AI/ML,Hard
+446,Sample AI/ML Question 446: Explain concept 246?,This is the answer for AI/ML concept 246.,AI/ML,Hard
+447,Sample AI/ML Question 447: Explain concept 247?,This is the answer for AI/ML concept 247.,AI/ML,Hard
+448,Sample AI/ML Question 448: Explain concept 248?,This is the answer for AI/ML concept 248.,AI/ML,Hard
+449,Sample AI/ML Question 449: Explain concept 249?,This is the answer for AI/ML concept 249.,AI/ML,Hard
+450,Sample AI/ML Question 450: Explain concept 250?,This is the answer for AI/ML concept 250.,AI/ML,Hard
+451,Sample Software Engineering Question 451: Explain concept 1?,This is the answer for Software Engineering concept 1.,Software Engineering,Medium
+452,Sample Software Engineering Question 452: Explain concept 2?,This is the answer for Software Engineering concept 2.,Software Engineering,Medium
+453,Sample Software Engineering Question 453: Explain concept 3?,This is the answer for Software Engineering concept 3.,Software Engineering,Medium
+454,Sample Software Engineering Question 454: Explain concept 4?,This is the answer for Software Engineering concept 4.,Software Engineering,Medium
+455,Sample Software Engineering Question 455: Explain concept 5?,This is the answer for Software Engineering concept 5.,Software Engineering,Medium
+456,Sample Software Engineering Question 456: Explain concept 6?,This is the answer for Software Engineering concept 6.,Software Engineering,Medium
+457,Sample Software Engineering Question 457: Explain concept 7?,This is the answer for Software Engineering concept 7.,Software Engineering,Medium
+458,Sample Software Engineering Question 458: Explain concept 8?,This is the answer for Software Engineering concept 8.,Software Engineering,Medium
+459,Sample Software Engineering Question 459: Explain concept 9?,This is the answer for Software Engineering concept 9.,Software Engineering,Medium
+460,Sample Software Engineering Question 460: Explain concept 10?,This is the answer for Software Engineering concept 10.,Software Engineering,Medium
+461,Sample Software Engineering Question 461: Explain concept 11?,This is the answer for Software Engineering concept 11.,Software Engineering,Medium
+462,Sample Software Engineering Question 462: Explain concept 12?,This is the answer for Software Engineering concept 12.,Software Engineering,Medium
+463,Sample Software Engineering Question 463: Explain concept 13?,This is the answer for Software Engineering concept 13.,Software Engineering,Medium
+464,Sample Software Engineering Question 464: Explain concept 14?,This is the answer for Software Engineering concept 14.,Software Engineering,Medium
+465,Sample Software Engineering Question 465: Explain concept 15?,This is the answer for Software Engineering concept 15.,Software Engineering,Medium
+466,Sample Software Engineering Question 466: Explain concept 16?,This is the answer for Software Engineering concept 16.,Software Engineering,Medium
+467,Sample Software Engineering Question 467: Explain concept 17?,This is the answer for Software Engineering concept 17.,Software Engineering,Medium
+468,Sample Software Engineering Question 468: Explain concept 18?,This is the answer for Software Engineering concept 18.,Software Engineering,Medium
+469,Sample Software Engineering Question 469: Explain concept 19?,This is the answer for Software Engineering concept 19.,Software Engineering,Medium
+470,Sample Software Engineering Question 470: Explain concept 20?,This is the answer for Software Engineering concept 20.,Software Engineering,Medium
+471,Sample Software Engineering Question 471: Explain concept 21?,This is the answer for Software Engineering concept 21.,Software Engineering,Medium
+472,Sample Software Engineering Question 472: Explain concept 22?,This is the answer for Software Engineering concept 22.,Software Engineering,Medium
+473,Sample Software Engineering Question 473: Explain concept 23?,This is the answer for Software Engineering concept 23.,Software Engineering,Medium
+474,Sample Software Engineering Question 474: Explain concept 24?,This is the answer for Software Engineering concept 24.,Software Engineering,Medium
+475,Sample Software Engineering Question 475: Explain concept 25?,This is the answer for Software Engineering concept 25.,Software Engineering,Medium
+476,Sample Software Engineering Question 476: Explain concept 26?,This is the answer for Software Engineering concept 26.,Software Engineering,Medium
+477,Sample Software Engineering Question 477: Explain concept 27?,This is the answer for Software Engineering concept 27.,Software Engineering,Medium
+478,Sample Software Engineering Question 478: Explain concept 28?,This is the answer for Software Engineering concept 28.,Software Engineering,Medium
+479,Sample Software Engineering Question 479: Explain concept 29?,This is the answer for Software Engineering concept 29.,Software Engineering,Medium
+480,Sample Software Engineering Question 480: Explain concept 30?,This is the answer for Software Engineering concept 30.,Software Engineering,Medium
+481,Sample Software Engineering Question 481: Explain concept 31?,This is the answer for Software Engineering concept 31.,Software Engineering,Medium
+482,Sample Software Engineering Question 482: Explain concept 32?,This is the answer for Software Engineering concept 32.,Software Engineering,Medium
+483,Sample Software Engineering Question 483: Explain concept 33?,This is the answer for Software Engineering concept 33.,Software Engineering,Medium
+484,Sample Software Engineering Question 484: Explain concept 34?,This is the answer for Software Engineering concept 34.,Software Engineering,Medium
+485,Sample Software Engineering Question 485: Explain concept 35?,This is the answer for Software Engineering concept 35.,Software Engineering,Medium
+486,Sample Software Engineering Question 486: Explain concept 36?,This is the answer for Software Engineering concept 36.,Software Engineering,Medium
+487,Sample Software Engineering Question 487: Explain concept 37?,This is the answer for Software Engineering concept 37.,Software Engineering,Medium
+488,Sample Software Engineering Question 488: Explain concept 38?,This is the answer for Software Engineering concept 38.,Software Engineering,Medium
+489,Sample Software Engineering Question 489: Explain concept 39?,This is the answer for Software Engineering concept 39.,Software Engineering,Medium
+490,Sample Software Engineering Question 490: Explain concept 40?,This is the answer for Software Engineering concept 40.,Software Engineering,Medium
+491,Sample Software Engineering Question 491: Explain concept 41?,This is the answer for Software Engineering concept 41.,Software Engineering,Medium
+492,Sample Software Engineering Question 492: Explain concept 42?,This is the answer for Software Engineering concept 42.,Software Engineering,Medium
+493,Sample Software Engineering Question 493: Explain concept 43?,This is the answer for Software Engineering concept 43.,Software Engineering,Medium
+494,Sample Software Engineering Question 494: Explain concept 44?,This is the answer for Software Engineering concept 44.,Software Engineering,Medium
+495,Sample Software Engineering Question 495: Explain concept 45?,This is the answer for Software Engineering concept 45.,Software Engineering,Medium
+496,Sample Software Engineering Question 496: Explain concept 46?,This is the answer for Software Engineering concept 46.,Software Engineering,Medium
+497,Sample Software Engineering Question 497: Explain concept 47?,This is the answer for Software Engineering concept 47.,Software Engineering,Medium
+498,Sample Software Engineering Question 498: Explain concept 48?,This is the answer for Software Engineering concept 48.,Software Engineering,Medium
+499,Sample Software Engineering Question 499: Explain concept 49?,This is the answer for Software Engineering concept 49.,Software Engineering,Medium
+500,Sample Software Engineering Question 500: Explain concept 50?,This is the answer for Software Engineering concept 50.,Software Engineering,Medium
+501,Sample Software Engineering Question 501: Explain concept 51?,This is the answer for Software Engineering concept 51.,Software Engineering,Medium
+502,Sample Software Engineering Question 502: Explain concept 52?,This is the answer for Software Engineering concept 52.,Software Engineering,Medium
+503,Sample Software Engineering Question 503: Explain concept 53?,This is the answer for Software Engineering concept 53.,Software Engineering,Medium
+504,Sample Software Engineering Question 504: Explain concept 54?,This is the answer for Software Engineering concept 54.,Software Engineering,Medium
+505,Sample Software Engineering Question 505: Explain concept 55?,This is the answer for Software Engineering concept 55.,Software Engineering,Medium
+506,Sample Software Engineering Question 506: Explain concept 56?,This is the answer for Software Engineering concept 56.,Software Engineering,Medium
+507,Sample Software Engineering Question 507: Explain concept 57?,This is the answer for Software Engineering concept 57.,Software Engineering,Medium
+508,Sample Software Engineering Question 508: Explain concept 58?,This is the answer for Software Engineering concept 58.,Software Engineering,Medium
+509,Sample Software Engineering Question 509: Explain concept 59?,This is the answer for Software Engineering concept 59.,Software Engineering,Medium
+510,Sample Software Engineering Question 510: Explain concept 60?,This is the answer for Software Engineering concept 60.,Software Engineering,Medium
+511,Sample Software Engineering Question 511: Explain concept 61?,This is the answer for Software Engineering concept 61.,Software Engineering,Medium
+512,Sample Software Engineering Question 512: Explain concept 62?,This is the answer for Software Engineering concept 62.,Software Engineering,Medium
+513,Sample Software Engineering Question 513: Explain concept 63?,This is the answer for Software Engineering concept 63.,Software Engineering,Medium
+514,Sample Software Engineering Question 514: Explain concept 64?,This is the answer for Software Engineering concept 64.,Software Engineering,Medium
+515,Sample Software Engineering Question 515: Explain concept 65?,This is the answer for Software Engineering concept 65.,Software Engineering,Medium
+516,Sample Software Engineering Question 516: Explain concept 66?,This is the answer for Software Engineering concept 66.,Software Engineering,Medium
+517,Sample Software Engineering Question 517: Explain concept 67?,This is the answer for Software Engineering concept 67.,Software Engineering,Medium
+518,Sample Software Engineering Question 518: Explain concept 68?,This is the answer for Software Engineering concept 68.,Software Engineering,Medium
+519,Sample Software Engineering Question 519: Explain concept 69?,This is the answer for Software Engineering concept 69.,Software Engineering,Medium
+520,Sample Software Engineering Question 520: Explain concept 70?,This is the answer for Software Engineering concept 70.,Software Engineering,Medium
+521,Sample Software Engineering Question 521: Explain concept 71?,This is the answer for Software Engineering concept 71.,Software Engineering,Medium
+522,Sample Software Engineering Question 522: Explain concept 72?,This is the answer for Software Engineering concept 72.,Software Engineering,Medium
+523,Sample Software Engineering Question 523: Explain concept 73?,This is the answer for Software Engineering concept 73.,Software Engineering,Medium
+524,Sample Software Engineering Question 524: Explain concept 74?,This is the answer for Software Engineering concept 74.,Software Engineering,Medium
+525,Sample Software Engineering Question 525: Explain concept 75?,This is the answer for Software Engineering concept 75.,Software Engineering,Medium
+526,Sample Software Engineering Question 526: Explain concept 76?,This is the answer for Software Engineering concept 76.,Software Engineering,Medium
+527,Sample Software Engineering Question 527: Explain concept 77?,This is the answer for Software Engineering concept 77.,Software Engineering,Medium
+528,Sample Software Engineering Question 528: Explain concept 78?,This is the answer for Software Engineering concept 78.,Software Engineering,Medium
+529,Sample Software Engineering Question 529: Explain concept 79?,This is the answer for Software Engineering concept 79.,Software Engineering,Medium
+530,Sample Software Engineering Question 530: Explain concept 80?,This is the answer for Software Engineering concept 80.,Software Engineering,Medium
+531,Sample Software Engineering Question 531: Explain concept 81?,This is the answer for Software Engineering concept 81.,Software Engineering,Medium
+532,Sample Software Engineering Question 532: Explain concept 82?,This is the answer for Software Engineering concept 82.,Software Engineering,Medium
+533,Sample Software Engineering Question 533: Explain concept 83?,This is the answer for Software Engineering concept 83.,Software Engineering,Medium
+534,Sample Software Engineering Question 534: Explain concept 84?,This is the answer for Software Engineering concept 84.,Software Engineering,Medium
+535,Sample Software Engineering Question 535: Explain concept 85?,This is the answer for Software Engineering concept 85.,Software Engineering,Medium
+536,Sample Software Engineering Question 536: Explain concept 86?,This is the answer for Software Engineering concept 86.,Software Engineering,Medium
+537,Sample Software Engineering Question 537: Explain concept 87?,This is the answer for Software Engineering concept 87.,Software Engineering,Medium
+538,Sample Software Engineering Question 538: Explain concept 88?,This is the answer for Software Engineering concept 88.,Software Engineering,Medium
+539,Sample Software Engineering Question 539: Explain concept 89?,This is the answer for Software Engineering concept 89.,Software Engineering,Medium
+540,Sample Software Engineering Question 540: Explain concept 90?,This is the answer for Software Engineering concept 90.,Software Engineering,Medium
+541,Sample Software Engineering Question 541: Explain concept 91?,This is the answer for Software Engineering concept 91.,Software Engineering,Medium
+542,Sample Software Engineering Question 542: Explain concept 92?,This is the answer for Software Engineering concept 92.,Software Engineering,Medium
+543,Sample Software Engineering Question 543: Explain concept 93?,This is the answer for Software Engineering concept 93.,Software Engineering,Medium
+544,Sample Software Engineering Question 544: Explain concept 94?,This is the answer for Software Engineering concept 94.,Software Engineering,Medium
+545,Sample Software Engineering Question 545: Explain concept 95?,This is the answer for Software Engineering concept 95.,Software Engineering,Medium
+546,Sample Software Engineering Question 546: Explain concept 96?,This is the answer for Software Engineering concept 96.,Software Engineering,Medium
+547,Sample Software Engineering Question 547: Explain concept 97?,This is the answer for Software Engineering concept 97.,Software Engineering,Medium
+548,Sample Software Engineering Question 548: Explain concept 98?,This is the answer for Software Engineering concept 98.,Software Engineering,Medium
+549,Sample Software Engineering Question 549: Explain concept 99?,This is the answer for Software Engineering concept 99.,Software Engineering,Medium
+550,Sample Software Engineering Question 550: Explain concept 100?,This is the answer for Software Engineering concept 100.,Software Engineering,Medium
+551,Sample Software Engineering Question 551: Explain concept 101?,This is the answer for Software Engineering concept 101.,Software Engineering,Medium
+552,Sample Software Engineering Question 552: Explain concept 102?,This is the answer for Software Engineering concept 102.,Software Engineering,Medium
+553,Sample Software Engineering Question 553: Explain concept 103?,This is the answer for Software Engineering concept 103.,Software Engineering,Medium
+554,Sample Software Engineering Question 554: Explain concept 104?,This is the answer for Software Engineering concept 104.,Software Engineering,Medium
+555,Sample Software Engineering Question 555: Explain concept 105?,This is the answer for Software Engineering concept 105.,Software Engineering,Medium
+556,Sample Software Engineering Question 556: Explain concept 106?,This is the answer for Software Engineering concept 106.,Software Engineering,Medium
+557,Sample Software Engineering Question 557: Explain concept 107?,This is the answer for Software Engineering concept 107.,Software Engineering,Medium
+558,Sample Software Engineering Question 558: Explain concept 108?,This is the answer for Software Engineering concept 108.,Software Engineering,Medium
+559,Sample Software Engineering Question 559: Explain concept 109?,This is the answer for Software Engineering concept 109.,Software Engineering,Medium
+560,Sample Software Engineering Question 560: Explain concept 110?,This is the answer for Software Engineering concept 110.,Software Engineering,Medium
+561,Sample Software Engineering Question 561: Explain concept 111?,This is the answer for Software Engineering concept 111.,Software Engineering,Medium
+562,Sample Software Engineering Question 562: Explain concept 112?,This is the answer for Software Engineering concept 112.,Software Engineering,Medium
+563,Sample Software Engineering Question 563: Explain concept 113?,This is the answer for Software Engineering concept 113.,Software Engineering,Medium
+564,Sample Software Engineering Question 564: Explain concept 114?,This is the answer for Software Engineering concept 114.,Software Engineering,Medium
+565,Sample Software Engineering Question 565: Explain concept 115?,This is the answer for Software Engineering concept 115.,Software Engineering,Medium
+566,Sample Software Engineering Question 566: Explain concept 116?,This is the answer for Software Engineering concept 116.,Software Engineering,Medium
+567,Sample Software Engineering Question 567: Explain concept 117?,This is the answer for Software Engineering concept 117.,Software Engineering,Medium
+568,Sample Software Engineering Question 568: Explain concept 118?,This is the answer for Software Engineering concept 118.,Software Engineering,Medium
+569,Sample Software Engineering Question 569: Explain concept 119?,This is the answer for Software Engineering concept 119.,Software Engineering,Medium
+570,Sample Software Engineering Question 570: Explain concept 120?,This is the answer for Software Engineering concept 120.,Software Engineering,Medium
+571,Sample Software Engineering Question 571: Explain concept 121?,This is the answer for Software Engineering concept 121.,Software Engineering,Medium
+572,Sample Software Engineering Question 572: Explain concept 122?,This is the answer for Software Engineering concept 122.,Software Engineering,Medium
+573,Sample Software Engineering Question 573: Explain concept 123?,This is the answer for Software Engineering concept 123.,Software Engineering,Medium
+574,Sample Software Engineering Question 574: Explain concept 124?,This is the answer for Software Engineering concept 124.,Software Engineering,Medium
+575,Sample Software Engineering Question 575: Explain concept 125?,This is the answer for Software Engineering concept 125.,Software Engineering,Medium
+576,Sample Software Engineering Question 576: Explain concept 126?,This is the answer for Software Engineering concept 126.,Software Engineering,Medium
+577,Sample Software Engineering Question 577: Explain concept 127?,This is the answer for Software Engineering concept 127.,Software Engineering,Medium
+578,Sample Software Engineering Question 578: Explain concept 128?,This is the answer for Software Engineering concept 128.,Software Engineering,Medium
+579,Sample Software Engineering Question 579: Explain concept 129?,This is the answer for Software Engineering concept 129.,Software Engineering,Medium
+580,Sample Software Engineering Question 580: Explain concept 130?,This is the answer for Software Engineering concept 130.,Software Engineering,Medium
+581,Sample Software Engineering Question 581: Explain concept 131?,This is the answer for Software Engineering concept 131.,Software Engineering,Medium
+582,Sample Software Engineering Question 582: Explain concept 132?,This is the answer for Software Engineering concept 132.,Software Engineering,Medium
+583,Sample Software Engineering Question 583: Explain concept 133?,This is the answer for Software Engineering concept 133.,Software Engineering,Medium
+584,Sample Software Engineering Question 584: Explain concept 134?,This is the answer for Software Engineering concept 134.,Software Engineering,Medium
+585,Sample Software Engineering Question 585: Explain concept 135?,This is the answer for Software Engineering concept 135.,Software Engineering,Medium
+586,Sample Software Engineering Question 586: Explain concept 136?,This is the answer for Software Engineering concept 136.,Software Engineering,Medium
+587,Sample Software Engineering Question 587: Explain concept 137?,This is the answer for Software Engineering concept 137.,Software Engineering,Medium
+588,Sample Software Engineering Question 588: Explain concept 138?,This is the answer for Software Engineering concept 138.,Software Engineering,Medium
+589,Sample Software Engineering Question 589: Explain concept 139?,This is the answer for Software Engineering concept 139.,Software Engineering,Medium
+590,Sample Software Engineering Question 590: Explain concept 140?,This is the answer for Software Engineering concept 140.,Software Engineering,Medium
+591,Sample Software Engineering Question 591: Explain concept 141?,This is the answer for Software Engineering concept 141.,Software Engineering,Medium
+592,Sample Software Engineering Question 592: Explain concept 142?,This is the answer for Software Engineering concept 142.,Software Engineering,Medium
+593,Sample Software Engineering Question 593: Explain concept 143?,This is the answer for Software Engineering concept 143.,Software Engineering,Medium
+594,Sample Software Engineering Question 594: Explain concept 144?,This is the answer for Software Engineering concept 144.,Software Engineering,Medium
+595,Sample Software Engineering Question 595: Explain concept 145?,This is the answer for Software Engineering concept 145.,Software Engineering,Medium
+596,Sample Software Engineering Question 596: Explain concept 146?,This is the answer for Software Engineering concept 146.,Software Engineering,Medium
+597,Sample Software Engineering Question 597: Explain concept 147?,This is the answer for Software Engineering concept 147.,Software Engineering,Medium
+598,Sample Software Engineering Question 598: Explain concept 148?,This is the answer for Software Engineering concept 148.,Software Engineering,Medium
+599,Sample Software Engineering Question 599: Explain concept 149?,This is the answer for Software Engineering concept 149.,Software Engineering,Medium
+600,Sample Software Engineering Question 600: Explain concept 150?,This is the answer for Software Engineering concept 150.,Software Engineering,Medium
+601,Sample Software Engineering Question 601: Explain concept 151?,This is the answer for Software Engineering concept 151.,Software Engineering,Medium
+602,Sample Software Engineering Question 602: Explain concept 152?,This is the answer for Software Engineering concept 152.,Software Engineering,Medium
+603,Sample Software Engineering Question 603: Explain concept 153?,This is the answer for Software Engineering concept 153.,Software Engineering,Medium
+604,Sample Software Engineering Question 604: Explain concept 154?,This is the answer for Software Engineering concept 154.,Software Engineering,Medium
+605,Sample Software Engineering Question 605: Explain concept 155?,This is the answer for Software Engineering concept 155.,Software Engineering,Medium
+606,Sample Software Engineering Question 606: Explain concept 156?,This is the answer for Software Engineering concept 156.,Software Engineering,Medium
+607,Sample Software Engineering Question 607: Explain concept 157?,This is the answer for Software Engineering concept 157.,Software Engineering,Medium
+608,Sample Software Engineering Question 608: Explain concept 158?,This is the answer for Software Engineering concept 158.,Software Engineering,Medium
+609,Sample Software Engineering Question 609: Explain concept 159?,This is the answer for Software Engineering concept 159.,Software Engineering,Medium
+610,Sample Software Engineering Question 610: Explain concept 160?,This is the answer for Software Engineering concept 160.,Software Engineering,Medium
+611,Sample Software Engineering Question 611: Explain concept 161?,This is the answer for Software Engineering concept 161.,Software Engineering,Medium
+612,Sample Software Engineering Question 612: Explain concept 162?,This is the answer for Software Engineering concept 162.,Software Engineering,Medium
+613,Sample Software Engineering Question 613: Explain concept 163?,This is the answer for Software Engineering concept 163.,Software Engineering,Medium
+614,Sample Software Engineering Question 614: Explain concept 164?,This is the answer for Software Engineering concept 164.,Software Engineering,Medium
+615,Sample Software Engineering Question 615: Explain concept 165?,This is the answer for Software Engineering concept 165.,Software Engineering,Medium
+616,Sample Software Engineering Question 616: Explain concept 166?,This is the answer for Software Engineering concept 166.,Software Engineering,Medium
+617,Sample Software Engineering Question 617: Explain concept 167?,This is the answer for Software Engineering concept 167.,Software Engineering,Medium
+618,Sample Software Engineering Question 618: Explain concept 168?,This is the answer for Software Engineering concept 168.,Software Engineering,Medium
+619,Sample Software Engineering Question 619: Explain concept 169?,This is the answer for Software Engineering concept 169.,Software Engineering,Medium
+620,Sample Software Engineering Question 620: Explain concept 170?,This is the answer for Software Engineering concept 170.,Software Engineering,Medium
+621,Sample Software Engineering Question 621: Explain concept 171?,This is the answer for Software Engineering concept 171.,Software Engineering,Medium
+622,Sample Software Engineering Question 622: Explain concept 172?,This is the answer for Software Engineering concept 172.,Software Engineering,Medium
+623,Sample Software Engineering Question 623: Explain concept 173?,This is the answer for Software Engineering concept 173.,Software Engineering,Medium
+624,Sample Software Engineering Question 624: Explain concept 174?,This is the answer for Software Engineering concept 174.,Software Engineering,Medium
+625,Sample Software Engineering Question 625: Explain concept 175?,This is the answer for Software Engineering concept 175.,Software Engineering,Medium
+626,Sample Software Engineering Question 626: Explain concept 176?,This is the answer for Software Engineering concept 176.,Software Engineering,Medium
+627,Sample Software Engineering Question 627: Explain concept 177?,This is the answer for Software Engineering concept 177.,Software Engineering,Medium
+628,Sample Software Engineering Question 628: Explain concept 178?,This is the answer for Software Engineering concept 178.,Software Engineering,Medium
+629,Sample Software Engineering Question 629: Explain concept 179?,This is the answer for Software Engineering concept 179.,Software Engineering,Medium
+630,Sample Software Engineering Question 630: Explain concept 180?,This is the answer for Software Engineering concept 180.,Software Engineering,Medium
+631,Sample Software Engineering Question 631: Explain concept 181?,This is the answer for Software Engineering concept 181.,Software Engineering,Medium
+632,Sample Software Engineering Question 632: Explain concept 182?,This is the answer for Software Engineering concept 182.,Software Engineering,Medium
+633,Sample Software Engineering Question 633: Explain concept 183?,This is the answer for Software Engineering concept 183.,Software Engineering,Medium
+634,Sample Software Engineering Question 634: Explain concept 184?,This is the answer for Software Engineering concept 184.,Software Engineering,Medium
+635,Sample Software Engineering Question 635: Explain concept 185?,This is the answer for Software Engineering concept 185.,Software Engineering,Medium
+636,Sample Software Engineering Question 636: Explain concept 186?,This is the answer for Software Engineering concept 186.,Software Engineering,Medium
+637,Sample Software Engineering Question 637: Explain concept 187?,This is the answer for Software Engineering concept 187.,Software Engineering,Medium
+638,Sample Software Engineering Question 638: Explain concept 188?,This is the answer for Software Engineering concept 188.,Software Engineering,Medium
+639,Sample Software Engineering Question 639: Explain concept 189?,This is the answer for Software Engineering concept 189.,Software Engineering,Medium
+640,Sample Software Engineering Question 640: Explain concept 190?,This is the answer for Software Engineering concept 190.,Software Engineering,Medium
+641,Sample Software Engineering Question 641: Explain concept 191?,This is the answer for Software Engineering concept 191.,Software Engineering,Medium
+642,Sample Software Engineering Question 642: Explain concept 192?,This is the answer for Software Engineering concept 192.,Software Engineering,Medium
+643,Sample Software Engineering Question 643: Explain concept 193?,This is the answer for Software Engineering concept 193.,Software Engineering,Medium
+644,Sample Software Engineering Question 644: Explain concept 194?,This is the answer for Software Engineering concept 194.,Software Engineering,Medium
+645,Sample Software Engineering Question 645: Explain concept 195?,This is the answer for Software Engineering concept 195.,Software Engineering,Medium
+646,Sample Software Engineering Question 646: Explain concept 196?,This is the answer for Software Engineering concept 196.,Software Engineering,Medium
+647,Sample Software Engineering Question 647: Explain concept 197?,This is the answer for Software Engineering concept 197.,Software Engineering,Medium
+648,Sample Software Engineering Question 648: Explain concept 198?,This is the answer for Software Engineering concept 198.,Software Engineering,Medium
+649,Sample Software Engineering Question 649: Explain concept 199?,This is the answer for Software Engineering concept 199.,Software Engineering,Medium
+650,Sample Software Engineering Question 650: Explain concept 200?,This is the answer for Software Engineering concept 200.,Software Engineering,Medium
+651,Sample Software Engineering Question 651: Explain concept 201?,This is the answer for Software Engineering concept 201.,Software Engineering,Medium
+652,Sample Software Engineering Question 652: Explain concept 202?,This is the answer for Software Engineering concept 202.,Software Engineering,Medium
+653,Sample Software Engineering Question 653: Explain concept 203?,This is the answer for Software Engineering concept 203.,Software Engineering,Medium
+654,Sample Software Engineering Question 654: Explain concept 204?,This is the answer for Software Engineering concept 204.,Software Engineering,Medium
+655,Sample Software Engineering Question 655: Explain concept 205?,This is the answer for Software Engineering concept 205.,Software Engineering,Medium
+656,Sample Software Engineering Question 656: Explain concept 206?,This is the answer for Software Engineering concept 206.,Software Engineering,Medium
+657,Sample Software Engineering Question 657: Explain concept 207?,This is the answer for Software Engineering concept 207.,Software Engineering,Medium
+658,Sample Software Engineering Question 658: Explain concept 208?,This is the answer for Software Engineering concept 208.,Software Engineering,Medium
+659,Sample Software Engineering Question 659: Explain concept 209?,This is the answer for Software Engineering concept 209.,Software Engineering,Medium
+660,Sample Software Engineering Question 660: Explain concept 210?,This is the answer for Software Engineering concept 210.,Software Engineering,Medium
+661,Sample Software Engineering Question 661: Explain concept 211?,This is the answer for Software Engineering concept 211.,Software Engineering,Medium
+662,Sample Software Engineering Question 662: Explain concept 212?,This is the answer for Software Engineering concept 212.,Software Engineering,Medium
+663,Sample Software Engineering Question 663: Explain concept 213?,This is the answer for Software Engineering concept 213.,Software Engineering,Medium
+664,Sample Software Engineering Question 664: Explain concept 214?,This is the answer for Software Engineering concept 214.,Software Engineering,Medium
+665,Sample Software Engineering Question 665: Explain concept 215?,This is the answer for Software Engineering concept 215.,Software Engineering,Medium
+666,Sample Software Engineering Question 666: Explain concept 216?,This is the answer for Software Engineering concept 216.,Software Engineering,Medium
+667,Sample Software Engineering Question 667: Explain concept 217?,This is the answer for Software Engineering concept 217.,Software Engineering,Medium
+668,Sample Software Engineering Question 668: Explain concept 218?,This is the answer for Software Engineering concept 218.,Software Engineering,Medium
+669,Sample Software Engineering Question 669: Explain concept 219?,This is the answer for Software Engineering concept 219.,Software Engineering,Medium
+670,Sample Software Engineering Question 670: Explain concept 220?,This is the answer for Software Engineering concept 220.,Software Engineering,Medium
+671,Sample Software Engineering Question 671: Explain concept 221?,This is the answer for Software Engineering concept 221.,Software Engineering,Medium
+672,Sample Software Engineering Question 672: Explain concept 222?,This is the answer for Software Engineering concept 222.,Software Engineering,Medium
+673,Sample Software Engineering Question 673: Explain concept 223?,This is the answer for Software Engineering concept 223.,Software Engineering,Medium
+674,Sample Software Engineering Question 674: Explain concept 224?,This is the answer for Software Engineering concept 224.,Software Engineering,Medium
+675,Sample Software Engineering Question 675: Explain concept 225?,This is the answer for Software Engineering concept 225.,Software Engineering,Medium
+676,Sample Software Engineering Question 676: Explain concept 226?,This is the answer for Software Engineering concept 226.,Software Engineering,Medium
+677,Sample Software Engineering Question 677: Explain concept 227?,This is the answer for Software Engineering concept 227.,Software Engineering,Medium
+678,Sample Software Engineering Question 678: Explain concept 228?,This is the answer for Software Engineering concept 228.,Software Engineering,Medium
+679,Sample Software Engineering Question 679: Explain concept 229?,This is the answer for Software Engineering concept 229.,Software Engineering,Medium
+680,Sample Software Engineering Question 680: Explain concept 230?,This is the answer for Software Engineering concept 230.,Software Engineering,Medium
+681,Sample Software Engineering Question 681: Explain concept 231?,This is the answer for Software Engineering concept 231.,Software Engineering,Medium
+682,Sample Software Engineering Question 682: Explain concept 232?,This is the answer for Software Engineering concept 232.,Software Engineering,Medium
+683,Sample Software Engineering Question 683: Explain concept 233?,This is the answer for Software Engineering concept 233.,Software Engineering,Medium
+684,Sample Software Engineering Question 684: Explain concept 234?,This is the answer for Software Engineering concept 234.,Software Engineering,Medium
+685,Sample Software Engineering Question 685: Explain concept 235?,This is the answer for Software Engineering concept 235.,Software Engineering,Medium
+686,Sample Software Engineering Question 686: Explain concept 236?,This is the answer for Software Engineering concept 236.,Software Engineering,Medium
+687,Sample Software Engineering Question 687: Explain concept 237?,This is the answer for Software Engineering concept 237.,Software Engineering,Medium
+688,Sample Software Engineering Question 688: Explain concept 238?,This is the answer for Software Engineering concept 238.,Software Engineering,Medium
+689,Sample Software Engineering Question 689: Explain concept 239?,This is the answer for Software Engineering concept 239.,Software Engineering,Medium
+690,Sample Software Engineering Question 690: Explain concept 240?,This is the answer for Software Engineering concept 240.,Software Engineering,Medium
+691,Sample Software Engineering Question 691: Explain concept 241?,This is the answer for Software Engineering concept 241.,Software Engineering,Medium
+692,Sample Software Engineering Question 692: Explain concept 242?,This is the answer for Software Engineering concept 242.,Software Engineering,Medium
+693,Sample Software Engineering Question 693: Explain concept 243?,This is the answer for Software Engineering concept 243.,Software Engineering,Medium
+694,Sample Software Engineering Question 694: Explain concept 244?,This is the answer for Software Engineering concept 244.,Software Engineering,Medium
+695,Sample Software Engineering Question 695: Explain concept 245?,This is the answer for Software Engineering concept 245.,Software Engineering,Medium
+696,Sample Software Engineering Question 696: Explain concept 246?,This is the answer for Software Engineering concept 246.,Software Engineering,Medium
+697,Sample Software Engineering Question 697: Explain concept 247?,This is the answer for Software Engineering concept 247.,Software Engineering,Medium
+698,Sample Software Engineering Question 698: Explain concept 248?,This is the answer for Software Engineering concept 248.,Software Engineering,Medium
+699,Sample Software Engineering Question 699: Explain concept 249?,This is the answer for Software Engineering concept 249.,Software Engineering,Medium
+700,Sample Software Engineering Question 700: Explain concept 250?,This is the answer for Software Engineering concept 250.,Software Engineering,Medium
