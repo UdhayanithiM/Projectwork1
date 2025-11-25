@@ -1,4 +1,3 @@
-// apps/web/app/api/assessment/[assessmentId]/start/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyJwt } from "@/lib/auth";
@@ -21,18 +20,21 @@ export async function POST(
 
     const assessmentId = params.assessmentId;
 
-    // 2. Fetch Assessment & Job Details
+    // 2. Fetch Assessment Details
     const assessment = await prisma.assessment.findUnique({
       where: { id: assessmentId },
       include: {
-        // Assuming you have relation to Job/Candidate. 
-        // If not, we fallback to defaults. Adjust based on your schema.
         candidate: true,
       }
     });
 
     if (!assessment) {
       return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
+    }
+
+    // 🛡️ Authorization: Ensure the logged-in user owns this assessment
+    if (assessment.candidateId !== user.id) {
+      return NextResponse.json({ error: "Forbidden: This assessment does not belong to you." }, { status: 403 });
     }
 
     // 3. Update Status in MongoDB
@@ -42,21 +44,23 @@ export async function POST(
     });
 
     // 4. Initialize AI Engine (Python)
-    // We pass the MongoDB ID so Python can sync with it
+    // We wait for this to complete so the session exists before the frontend connects via WebSocket
     const aiResponse = await AIService.startSession({
       session_id: assessment.id,
       candidate_id: user.id,
-      job_title: "Software Engineer", // Replace with assessment.jobTitle if available
-      company: "Tech Corp",           // Replace with assessment.company if available
-      personality: "Default Manager"  // Can be dynamic
+      job_title: "Software Engineer", // TODO: Pull from Assessment -> Job relation in future
+      company: "Tech Corp",           // TODO: Pull from Assessment -> Company relation in future
+      personality: "Default Manager"
     });
 
     return NextResponse.json(aiResponse);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Start Interview Error:", error);
+    
+    // Return specific error message to help frontend debug
     return NextResponse.json(
-      { error: "Failed to start interview session" },
+      { error: error.message || "Failed to start interview session" },
       { status: 500 }
     );
   }

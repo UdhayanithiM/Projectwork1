@@ -9,61 +9,43 @@ export async function POST(
   try {
     const { assessmentId } = params;
 
-    // 1. FETCH DB DATA FIRST
-    // We get the candidateId NOW so we don't have to query the DB again 
-    // after the long AI wait, reducing the risk of connection timeouts.
-    const assessment = await prisma.assessment.findUnique({
-      where: { id: assessmentId },
-      select: { candidateId: true, status: true }
-    });
-
-    if (!assessment) {
-      return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
-    }
-
-    // 2. CALL AI SERVICE (This might take time)
+    // 1. Call Python to calculate scores based on the transcript
     console.log(`📊 Generating scores for ${assessmentId}...`);
-    let aiResult;
-    try {
-      aiResult = await AIService.endSession(assessmentId);
-    } catch (aiError) {
-      console.error("AI Scoring failed, falling back to default:", aiError);
-      // Fallback if AI crashes so the user isn't stuck
-      aiResult = {
-        scores: {
-          "Role Fit": 0,
-          "Culture Fit": 0,
-          "Honesty": 0,
-          "Communication": 0,
-          "Notes": "AI scoring service timed out. Please review transcript manually."
-        }
-      };
-    }
+    const aiResult = await AIService.endSession(assessmentId);
+    const scores = aiResult.scores; // Expecting: { "Role Fit": 8, "Culture Fit": 7, ... }
 
-    const scores = aiResult.scores || {};
-
-    // 3. RE-CONNECT & SAVE REPORT
-    // We create the report using the candidateId we fetched at the start.
+    // 2. Create the Report in MongoDB
+    // We map the flexible JSON from Python to your Prisma schema
     const report = await prisma.report.create({
       data: {
         assessmentId: assessmentId,
-        candidateId: assessment.candidateId, // Use the ID we fetched in Step 1
-        summary: scores.Notes || "Assessment completed.",
+        // Assuming you have candidateId available or fetch it from assessment first
+        // For safety, let's connect it via the assessment relation if possible, 
+        // but Prisma requires the direct ID for the 'candidate' relation.
+        // Let's fetch the assessment first to get the candidateId.
+        candidate: { 
+            connect: { 
+                id: (await prisma.assessment.findUniqueOrThrow({ where: { id: assessmentId } })).candidateId 
+            } 
+        },
+        assessment: { connect: { id: assessmentId } },
         
-        // Map Scores (Default to 0 if missing)
-        roleFitScore: Number(scores["Role Fit"]) || 0,
-        cultureFitScore: Number(scores["Culture Fit"]) || 0,
-        honestyScore: Number(scores["Honesty"]) || 0,
-        technicalScore: Number(scores["Technical Skills"]) || 0,
+        summary: scores.Notes || "Interview completed successfully.",
         
-        // Store complex JSON data
-        strengths: scores.Strengths || [],
+        // Map the specific scores
+        roleFitScore: scores["Role Fit"] || 0,
+        cultureFitScore: scores["Culture Fit"] || 0,
+        honestyScore: scores["Honesty"] || 0,
+        technicalScore: scores["Technical Skills"] || 0, // If provided by AI
+        
+        // Store the complex data structures
+        strengths: scores.Strengths || [], 
         areasForImprovement: scores.Weaknesses || [],
-        behavioralScores: scores
+        behavioralScores: scores // Store the raw JSON for future proofing
       }
     });
 
-    // 4. UPDATE STATUS
+    // 3. Mark Assessment as COMPLETED
     await prisma.assessment.update({
       where: { id: assessmentId },
       data: { status: "COMPLETED" }
