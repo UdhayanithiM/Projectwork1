@@ -9,49 +9,51 @@ export async function POST(
   try {
     const { assessmentId } = params;
 
-    // 1. Call Python to calculate scores based on the transcript
     console.log(`📊 Generating scores for ${assessmentId}...`);
-    const aiResult = await AIService.endSession(assessmentId);
-    const scores = aiResult.scores; // Expecting: { "Role Fit": 8, "Culture Fit": 7, ... }
 
-    // 2. Create the Report in MongoDB
-    // We map the flexible JSON from Python to your Prisma schema
-    const report = await prisma.report.create({
-      data: {
-        assessmentId: assessmentId,
-        // Assuming you have candidateId available or fetch it from assessment first
-        // For safety, let's connect it via the assessment relation if possible, 
-        // but Prisma requires the direct ID for the 'candidate' relation.
-        // Let's fetch the assessment first to get the candidateId.
-        candidate: { 
-            connect: { 
-                id: (await prisma.assessment.findUniqueOrThrow({ where: { id: assessmentId } })).candidateId 
-            } 
-        },
-        assessment: { connect: { id: assessmentId } },
-        
-        summary: scores.Notes || "Interview completed successfully.",
-        
-        // Map the specific scores
-        roleFitScore: scores["Role Fit"] || 0,
-        cultureFitScore: scores["Culture Fit"] || 0,
-        honestyScore: scores["Honesty"] || 0,
-        technicalScore: scores["Technical Skills"] || 0, // If provided by AI
-        
-        // Store the complex data structures
-        strengths: scores.Strengths || [], 
-        areasForImprovement: scores.Weaknesses || [],
-        behavioralScores: scores // Store the raw JSON for future proofing
-      }
+    // 1. Call Python scoring engine
+    const aiResult = await AIService.endSession(assessmentId);
+    const scores = aiResult.scores || {};
+
+    // 2. Fetch assessment to get candidateId
+    const assessment = await prisma.assessment.findUniqueOrThrow({
+      where: { id: assessmentId },
+      select: { candidateId: true }
     });
 
-    // 3. Mark Assessment as COMPLETED
+    // 3. Create interview report
+    const report = await prisma.report.create({
+      data: {
+        // --- RELATIONS ---
+        candidate: { connect: { id: assessment.candidateId } },
+        assessment: { connect: { id: assessmentId } },
+
+        // --- SUMMARY ---
+        summary: scores.Notes || "Interview completed successfully.",
+
+        // --- SCORES ---
+        roleFitScore: scores["Role Fit"] ?? 0,
+        cultureFitScore: scores["Culture Fit"] ?? 0,
+        honestyScore: scores["Honesty"] ?? 0,
+        technicalScore: scores["Technical Skills"] ?? 0,
+
+        // --- STRUCTURED DATA ---
+        strengths: scores.Strengths ?? [],
+        areasForImprovement: scores.Weaknesses ?? [],
+        behavioralScores: scores,
+      },
+    });
+
+    // 4. Mark the assessment as finished
     await prisma.assessment.update({
       where: { id: assessmentId },
       data: { status: "COMPLETED" }
     });
 
-    return NextResponse.json({ success: true, reportId: report.id });
+    return NextResponse.json({
+      success: true,
+      reportId: report.id,
+    });
 
   } catch (error: any) {
     console.error("Finish Interview Error:", error);
