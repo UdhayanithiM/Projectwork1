@@ -1,0 +1,26 @@
+import * as React from "react"
+import { cn } from "@/lib/utils"
+
+export interface GlassPanelProps extends React.HTMLAttributes<HTMLDivElement> {
+  hoverEffect?: boolean
+}
+
+const GlassPanel = React.forwardRef<HTMLDivElement, GlassPanelProps>(
+  ({ className, hoverEffect = true, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn(
+          "glass-panel rounded-xl p-6",
+          !hoverEffect && "hover:transform-none hover:border-white/10",
+          className
+        )}
+        {...props}
+      />
+    )
+  }
+)
+GlassPanel.displayName = "GlassPanel"
+
+export { GlassPanel }
+

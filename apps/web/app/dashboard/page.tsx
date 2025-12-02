@@ -1,19 +1,32 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import { ArrowRight, Code, Gauge, User, BookOpen, CalendarClock, AlertTriangle, FileText, CheckCircle, Pencil, MessageSquare, ShieldCheck, ShieldX } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ModeToggle } from "@/components/mode-toggle"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useAuthStore } from "@/stores/authStore"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import {
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+  CalendarClock,
+  CheckCircle,
+  Clock,
+  Code,
+  FileText,
+  MessageSquare,
+  Play,
+  Sparkles,
+  Trophy
+} from "lucide-react";
 
-// This type definition now correctly reflects our data structure
+import { Button } from "@/components/ui/button";
+import { GlassPanel } from "@/components/ui/glass-panel";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAuthStore } from "@/stores/authStore";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+// --- Types ---
 type Assessment = {
   id: string;
   status: string;
@@ -21,27 +34,23 @@ type Assessment = {
   technicalAssessment: {
     score?: number | null;
   } | null;
-  behavioralInterview: {} | null; // We just need to know if it exists
-  report: { id: string; } | null;
+  behavioralInterview: {} | null;
+  report: { id: string } | null;
 };
 
+// --- Animations ---
 const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: { staggerChildren: 0.1 },
-    },
-};
-
-const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
 };
 
 export default function StudentDashboard() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const userName = user?.name?.split(' ')[0] || "Student";
+  const userName = user?.name?.split(" ")[0] || "Student";
 
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,297 +61,312 @@ export default function StudentDashboard() {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch('/api/candidate/assessments', {
-            credentials: 'include',
+        const response = await fetch("/api/candidate/assessments", {
+          credentials: "include",
         });
-        
+
         if (response.status === 401 || response.status === 403) {
-          router.push('/login');
+          router.push("/login");
           return;
         }
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch your assessments.');
+          console.warn("API Error, using empty state");
+          setAssessments([]); 
+          return;
         }
 
         const data: Assessment[] = await response.json();
         setAssessments(data);
-
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred.');
+        console.error(err);
+        setAssessments([]);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     if (user) {
-        fetchAssessments();
+      fetchAssessments();
     }
   }, [user, router]);
 
-  const upcomingAssessments = assessments.filter(a => a.status === 'PENDING');
-  const completedAssessments = assessments.filter(a => a.status === 'COMPLETED');
+  const upcomingAssessments = assessments.filter((a) => a.status === "PENDING");
+  const completedAssessments = assessments.filter((a) => a.status === "COMPLETED");
+
+  // Calculate Stats
+  const total = assessments.length;
+  const completedCount = completedAssessments.length;
+  const pendingCount = upcomingAssessments.length;
+  const completionRate = total > 0 ? Math.round((completedCount / total) * 100) : 0;
 
   return (
-    <div className="flex min-h-screen flex-col bg-muted/30">
-        <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container flex h-16 items-center justify-between">
-                <Link href="/" className="flex items-center gap-2">
-                    <Gauge className="h-6 w-6 text-primary" />
-                    <span className="font-bold text-lg hidden sm:inline">
-                        <span className="text-primary">Forti</span>Twin
-                    </span>
-                </Link>
-                <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-                    <Link href="/dashboard" className="text-primary font-semibold">Dashboard</Link>
-                    <Link href="/report" className="text-muted-foreground hover:text-primary transition-colors">Reports</Link>
-                </nav>
-                <div className="flex items-center gap-4">
-                    <ModeToggle />
-                    <Button variant="outline" size="icon" asChild>
-                        <Link href="/dashboard/settings">
-                            <User className="h-4 w-4" />
-                            <span className="sr-only">Settings</span>
-                        </Link>
-                    </Button>
-                </div>
+    <motion.div
+      className="space-y-8"
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+    >
+      {/* 1. Hero Header */}
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-gradient w-fit">
+            Hello, {userName} 👋
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            Ready to level up your interview skills today?
+          </p>
+        </div>
+        <Button size="lg" className="shadow-lg shadow-primary/25" asChild>
+           {/* Pointing to new assessment creation */}
+           <Link href="/technical-assessment/new">
+             Start New Practice <ArrowRight className="ml-2 h-4 w-4" />
+           </Link>
+        </Button>
+      </div>
+
+      {/* 2. Bento Grid Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Stats Card 1: Completion */}
+        <GlassPanel className="relative overflow-hidden md:col-span-1 flex flex-col justify-between min-h-[160px] border-l-4 border-l-primary/50 hover:bg-white/5 transition-colors">
+          <div className="absolute top-0 right-0 p-4 opacity-[0.03]">
+            <Trophy className="w-32 h-32" />
+          </div>
+          <div className="relative z-10">
+            <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Progress</p>
+            <div className="flex items-baseline gap-2 mt-2">
+              <h2 className="text-4xl font-bold text-foreground">{completionRate}%</h2>
+              <span className="text-sm text-muted-foreground">completed</span>
             </div>
-        </header>
-        <main className="flex-1">
-            <motion.div 
-                className="container py-8 space-y-8"
-                initial="hidden"
-                animate="visible"
-                variants={containerVariants}
-            >
-                <motion.div variants={itemVariants}>
-                    <h1 className="text-3xl font-bold">Welcome back, {userName}!</h1>
-                    <p className="text-muted-foreground">Here are your assigned assessments and progress.</p>
-                </motion.div>
-                <div className="grid gap-8 lg:grid-cols-3">
-                    <motion.div className="lg:col-span-2 space-y-8">
-                        <motion.div variants={itemVariants}>
-                            <Tabs defaultValue="upcoming">
-                                <TabsList>
-                                    <TabsTrigger value="upcoming">Upcoming ({isLoading ? '...' : upcomingAssessments.length})</TabsTrigger>
-                                    <TabsTrigger value="completed">Completed ({isLoading ? '...' : completedAssessments.length})</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="upcoming" className="pt-4">
-                                    <AssessmentList assessments={upcomingAssessments} isLoading={isLoading} error={error} type="upcoming" />
-                                </TabsContent>
-                                <TabsContent value="completed" className="pt-4">
-                                    <AssessmentList assessments={completedAssessments} isLoading={isLoading} error={error} type="completed" />
-                                </TabsContent>
-                            </Tabs>
-                        </motion.div>
-                    </motion.div>
-                    <div className="lg:col-span-1 space-y-8">
-                        <motion.div variants={itemVariants}>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Your Progress</CardTitle>
-                                    <CardDescription>An overview of your assessment journey.</CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid grid-cols-2 gap-4 text-center">
-                                        <div>
-                                            <p className="text-2xl font-bold">{isLoading ? "-" : completedAssessments.length}</p>
-                                            <p className="text-xs text-muted-foreground">Completed</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-2xl font-bold">{isLoading ? "-" : upcomingAssessments.length}</p>
-                                            <p className="text-xs text-muted-foreground">Upcoming</p>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                        <motion.div variants={itemVariants}>
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Quick Access</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-2">
-                                    <Button variant="ghost" className="w-full justify-start" asChild>
-                                        <Link href="/report">
-                                            <FileText className="mr-2 h-4 w-4" /> View My Reports
-                                        </Link>
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    </div>
-                </div>
-            </motion.div>
-        </main>
-    </div>
-  )
+          </div>
+          <div className="space-y-2 mt-4">
+             <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Current Level</span>
+                <span>Next Level</span>
+             </div>
+             <Progress value={completionRate} className="h-2 bg-secondary/50" />
+          </div>
+        </GlassPanel>
+
+        {/* Stats Card 2: Pending */}
+        <GlassPanel className="md:col-span-1 flex flex-col justify-between min-h-[160px] border-l-4 border-l-warning/50">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Pending</p>
+              <h2 className="text-4xl font-bold mt-2 text-warning">{pendingCount}</h2>
+            </div>
+            <div className="p-3 bg-warning/10 rounded-xl border border-warning/20">
+              <Clock className="w-6 h-6 text-warning" />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-4">Assessments waiting for action</p>
+        </GlassPanel>
+
+        {/* Stats Card 3: Completed */}
+        <GlassPanel className="md:col-span-1 flex flex-col justify-between min-h-[160px] border-l-4 border-l-success/50">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Finished</p>
+              <h2 className="text-4xl font-bold mt-2 text-success">{completedCount}</h2>
+            </div>
+            <div className="p-3 bg-success/10 rounded-xl border border-success/20">
+              <CheckCircle className="w-6 h-6 text-success" />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-4">Total sessions completed</p>
+        </GlassPanel>
+      </div>
+
+      {/* 3. Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Upcoming (2/3 width) */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-semibold flex items-center gap-2">
+              <Activity className="w-5 h-5 text-primary" />
+              Up Next
+            </h3>
+          </div>
+
+          {isLoading ? (
+            <AssessmentSkeleton />
+          ) : error ? (
+            <ErrorState message={error} />
+          ) : upcomingAssessments.length === 0 ? (
+            <EmptyState />
+          ) : (
+            <div className="space-y-4">
+              {upcomingAssessments.map((assessment) => (
+                <AssessmentCard key={assessment.id} assessment={assessment} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Recent Activity (1/3 width) */}
+        <div className="space-y-6">
+          <h3 className="text-xl font-semibold text-muted-foreground">Recent History</h3>
+          {isLoading ? (
+            <div className="space-y-4">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+            </div>
+          ) : completedAssessments.length === 0 ? (
+            <div className="text-sm text-muted-foreground p-6 border border-dashed border-white/10 rounded-xl text-center">
+                <p>No history yet.</p>
+                <p className="text-xs mt-1 text-muted-foreground/60">Complete an assessment to see it here.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {completedAssessments.slice(0, 3).map((assessment) => (
+                <HistoryCard key={assessment.id} assessment={assessment} />
+              ))}
+              {completedAssessments.length > 3 && (
+                  <Button variant="ghost" className="w-full text-muted-foreground hover:text-primary" asChild>
+                      {/* Updated link to point to the correct interviews page */}
+                      <Link href="/dashboard/interviews">View All History</Link>
+                  </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
 }
 
-function AssessmentList({ assessments, isLoading, error, type }: { assessments: Assessment[], isLoading: boolean, error: string | null, type: 'upcoming' | 'completed' }) {
-    if (isLoading) {
-        return <AssessmentSkeleton />;
-    }
-    if (error && assessments.length === 0) {
-        return <ErrorState message={error} />;
-    }
-    if (assessments.length === 0) {
-        return <EmptyState type={type} />;
-    }
-    return (
-        <div className="space-y-4">
-            {assessments.map(assessment => (
-                <AssessmentCard key={assessment.id} assessment={assessment} />
-            ))}
-        </div>
-    );
-}
+// --- Sub-Components ---
 
 function AssessmentCard({ assessment }: { assessment: Assessment }) {
-    const PASSING_SCORE = 70;
-    const isCompleted = assessment.status === 'COMPLETED';
-    const isTechnical = !!assessment.technicalAssessment;
-    const isBehavioral = !!assessment.behavioralInterview;
-    const score = assessment.technicalAssessment?.score;
-    const hasPassed = typeof score === 'number' && score >= PASSING_SCORE;
+  const isBehavioral = !!assessment.behavioralInterview;
+  const isCombo = assessment.technicalAssessment && assessment.behavioralInterview;
+  
+  let title = "Technical Assessment";
+  let icon = <Code className="h-5 w-5 text-primary" />;
+  let subtitle = "Coding & Algorithms";
+  let startLink = `/technical-assessment/${assessment.id}`;
+  let duration = "45m";
 
-    let title = "General Assessment";
-    let icon = <FileText className="h-4 w-4" />;
-    let focusText = "Awaiting details";
-    let startLink = `/technical-assessment/${assessment.id}`;
-    let statusIcon = <Pencil className="mr-1.5 h-4 w-4"/>;
-    let statusText = "Pending";
-    let statusColor = "text-blue-600";
-    
-    // Determine title and other details based on the current state
-    if (isCompleted) {
-        title = "Assessment Completed";
-        icon = <CheckCircle className="h-4 w-4" />;
-        focusText = "Awaiting final report";
-    } else if (assessment.technicalAssessment && assessment.behavioralInterview) {
-        // This is the standard two-stage assessment, and it's pending
-        title = "Technical Skills Assessment";
-        icon = <Code className="h-4 w-4" />;
-        focusText = "Focus: Problem Solving & Algorithms";
-        startLink = `/technical-assessment/${assessment.id}`;
-    } else if (isBehavioral) {
-        // This handles a standalone behavioral interview
-        title = "Behavioral Interview";
-        icon = <MessageSquare className="h-4 w-4" />;
-        focusText = "Focus: Communication & Soft Skills";
-        startLink = `/take-interview/${assessment.id}`;
-    }
+  if (isCombo) {
+    title = "Full Interview Loop";
+    icon = <Sparkles className="h-5 w-5 text-accent" />;
+    subtitle = "Technical + Behavioral";
+    duration = "60m";
+  } else if (isBehavioral) {
+    title = "Behavioral Interview";
+    icon = <MessageSquare className="h-5 w-5 text-info" />;
+    subtitle = "Soft Skills Check";
+    startLink = `/take-interview/${assessment.id}`;
+    duration = "30m";
+  }
 
+  return (
+    <GlassPanel className="p-0 hover:border-primary/50 group transition-all duration-300 overflow-hidden">
+      <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="h-14 w-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-105 group-hover:bg-primary/10 transition-all">
+            {icon}
+          </div>
+          <div>
+            <h4 className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+              {title}
+            </h4>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+              <span className="flex items-center gap-1.5">
+                <CalendarClock className="h-3.5 w-3.5" />
+                {new Date(assessment.createdAt).toLocaleDateString()}
+              </span>
+              <span className="w-1 h-1 bg-white/20 rounded-full" />
+              <span>{subtitle}</span>
+              <span className="w-1 h-1 bg-white/20 rounded-full" />
+              <span className="flex items-center gap-1">
+                 <Clock className="h-3.5 w-3.5" /> {duration}
+              </span>
+            </div>
+          </div>
+        </div>
 
-    if (isCompleted) {
-        if (hasPassed) {
-            statusIcon = <ShieldCheck className="mr-1.5 h-4 w-4"/>;
-            statusText = "Passed";
-            statusColor = "text-green-600";
-        } else {
-            statusIcon = <ShieldX className="mr-1.5 h-4 w-4"/>;
-            statusText = "Completed";
-            statusColor = "text-gray-600";
-        }
-    }
-    
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>{title}</CardTitle>
-                <CardDescription>Assigned on {new Date(assessment.createdAt).toLocaleDateString()}</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        {icon}
-                        <span>{focusText}</span>
-                    </div>
-                    <span className={`font-semibold flex items-center text-sm ${statusColor}`}>
-                        {statusIcon}
-                        {statusText}
-                    </span>
-                </div>
-                {isCompleted && typeof score === 'number' && (
-                     <div className="mt-4">
-                         <div className="flex items-center justify-between font-medium text-sm">
-                             <span>Final Technical Score:</span>
-                             <span className={`font-bold text-lg ${hasPassed ? 'text-primary' : 'text-destructive'}`}>
-                                {score.toFixed(1)}%
-                             </span>
-                         </div>
-                         <Progress value={score} className="h-2 mt-2" />
-                    </div>
-                )}
-            </CardContent>
-            <CardFooter className="flex justify-end">
-                {/* --- THIS IS THE CORRECTED AND FINAL LOGIC --- */}
-                
-                {/* 1. If the assessment is PENDING, show "Start Assessment" */}
-                {assessment.status === 'PENDING' && (
-                    <Button asChild><Link href={startLink}>Start Assessment <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
-                )}
-
-                {/* 2. If the assessment is COMPLETED and they PASSED, show "Proceed to Interview" */}
-                {assessment.status === 'COMPLETED' && hasPassed && (
-                    // We now link to the dynamic interview page using the main assessment ID
-                    <Button asChild><Link href={`/take-interview/${assessment.id}`}>Proceed to Interview <ArrowRight className="ml-2 h-4 w-4" /></Link></Button>
-                )}
-                
-                {/* 3. If the assessment is COMPLETED but they FAILED, show "View Report" */}
-                {assessment.status === 'COMPLETED' && !hasPassed && (
-                    <Button variant="secondary" asChild><Link href={`/report/${assessment.id}`}>View Report</Link></Button>
-                )}
-            </CardFooter>
-        </Card>
-    );
+        <Button asChild className="shrink-0 w-full sm:w-auto shadow-lg shadow-primary/20 hover:shadow-primary/40">
+          <Link href={startLink}>
+            Start Now <Play className="ml-2 h-4 w-4 fill-current" />
+          </Link>
+        </Button>
+      </div>
+    </GlassPanel>
+  );
 }
 
-// --- Helper Components (No changes needed) ---
-function EmptyState({ type }: { type: 'upcoming' | 'completed' }) {
-    const content = {
-        upcoming: { title: "No Upcoming Assessments", description: "You're all caught up! New assessments will appear here." },
-        completed: { title: "No Completed Assessments", description: "Your past reports will be listed here after you complete an assessment." }
-    };
+function HistoryCard({ assessment }: { assessment: Assessment }) {
+    const score = assessment.technicalAssessment?.score || 0;
+    const isPassed = score >= 70;
+
     return (
-        <div className="text-center py-12 border-2 border-dashed rounded-lg">
-            <div className="inline-block bg-muted p-4 rounded-full mb-4">
-                <CalendarClock className="h-8 w-8 text-muted-foreground" />
+        <GlassPanel className="p-4 flex items-center justify-between hover:bg-white/5 cursor-pointer group transition-colors">
+            <div className="flex items-center gap-3">
+                <div className={cn("p-2.5 rounded-xl", isPassed ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive")}>
+                    {isPassed ? <Trophy className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+                </div>
+                <div>
+                    <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                        {assessment.technicalAssessment ? "Technical Round" : "Interview Session"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                        {new Date(assessment.createdAt).toLocaleDateString()}
+                    </p>
+                </div>
             </div>
-            <h3 className="text-xl font-semibold">{content[type].title}</h3>
-            <p className="text-muted-foreground mt-2 max-w-xs mx-auto">{content[type].description}</p>
-        </div>
-    );
+            <div className="text-right">
+                <span className={cn("text-lg font-bold block", isPassed ? "text-success" : "text-destructive")}>
+                    {score.toFixed(0)}%
+                </span>
+            </div>
+        </GlassPanel>
+    )
+}
+
+function EmptyState() {
+  return (
+    <GlassPanel className="py-12 text-center border-dashed border-white/10 bg-transparent">
+      <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-white/5 mb-4 animate-float">
+        <Sparkles className="h-8 w-8 text-muted-foreground" />
+      </div>
+      <h3 className="text-lg font-semibold text-foreground">All Caught Up!</h3>
+      <p className="text-muted-foreground max-w-xs mx-auto mt-2">
+        You have no pending assessments. Why not practice a new skill?
+      </p>
+      <Button variant="outline" className="mt-6" asChild>
+        {/* Point to new assessment if practice library doesn't exist yet */}
+        <Link href="/technical-assessment/new">Start Practice Session</Link>
+      </Button>
+    </GlassPanel>
+  );
 }
 
 function ErrorState({ message }: { message: string }) {
-    return (
-        <div className="text-center py-12 border-2 border-dashed rounded-lg border-destructive/50 bg-destructive/5">
-            <div className="inline-block bg-destructive/10 p-4 rounded-full mb-4">
-                <AlertTriangle className="h-8 w-8 text-destructive" />
-            </div>
-            <h3 className="text-xl font-semibold text-destructive">Could Not Load Assessments</h3>
-            <p className="text-muted-foreground mt-2">{message}</p>
-        </div>
-    );
+  return (
+    <GlassPanel className="py-8 text-center border-destructive/50 bg-destructive/5">
+      <AlertTriangle className="h-10 w-10 text-destructive mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-destructive">Error Loading Data</h3>
+      <p className="text-destructive/80 mt-2">{message}</p>
+    </GlassPanel>
+  );
 }
 
 function AssessmentSkeleton() {
-    return (
-        <div className="space-y-4">
-            <Card>
-                <CardHeader>
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-1/2 mt-2" />
-                </CardHeader>
-                <CardContent>
-                    <Skeleton className="h-5 w-2/5" />
-                </CardContent>
-                <CardFooter className="flex justify-end">
-                    <Skeleton className="h-10 w-32" />
-                </CardFooter>
-            </Card>
-        </div>
-    );
+  return (
+    <div className="space-y-4">
+      {[1, 2].map((i) => (
+        <GlassPanel key={i} className="p-6">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-14 w-14 rounded-2xl" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-5 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <Skeleton className="h-10 w-28" />
+          </div>
+        </GlassPanel>
+      ))}
+    </div>
+  );
 }

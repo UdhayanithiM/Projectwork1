@@ -1,25 +1,25 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useTheme } from "next-themes"
-import Editor from "@monaco-editor/react"
-import { Skeleton } from "./ui/skeleton"
+import Editor, { OnMount } from "@monaco-editor/react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { cn } from "@/lib/utils"
 
 interface CodeEditorProps {
   value: string
-  // FIX: The prop now expects a function that only receives a string.
   onChange: (value: string) => void
   language?: string
   height?: string
+  className?: string
 }
 
 export function CodeEditor({ 
   value, 
   onChange, 
   language = "javascript", 
-  height = "100%" 
+  height = "100%",
+  className
 }: CodeEditorProps) {
-  const { theme } = useTheme()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -27,33 +27,39 @@ export function CodeEditor({
   }, [])
 
   if (!mounted) {
-    return <Skeleton className="w-full h-full" style={{ height }} />;
+    return <Skeleton className="w-full h-full bg-white/5 rounded-none" style={{ height }} />;
   }
 
-  const editorTheme = theme === 'dark' ? 'vs-dark' : 'light';
-
-  // FIX: This handler ensures we always call the parent's onChange with a string.
-  const handleEditorChange = (value: string | undefined) => {
-    onChange(value || "");
-  };
+  // Handle editor mount to configure extra settings if needed
+  const handleEditorDidMount: OnMount = (editor, monaco) => {
+    // Optional: Define a custom theme if you want to match "Deep Void" exactly
+    // For now, vs-dark is close enough
+  }
 
   return (
-    <div className="h-full w-full">
+    <div className={cn("h-full w-full overflow-hidden bg-[#1e1e1e]", className)}>
       <Editor
         height={height}
         language={language}
-        theme={editorTheme}
+        theme="vs-dark"
         value={value}
-        onChange={handleEditorChange}
-        loading={<Skeleton className="w-full h-full" />}
+        onChange={(val) => onChange(val || "")}
+        onMount={handleEditorDidMount}
+        loading={<Skeleton className="w-full h-full bg-white/5" />}
         options={{
           minimap: { enabled: false },
           fontSize: 14,
+          fontFamily: "'JetBrains Mono', monospace", // Use our token font
           wordWrap: "on",
           scrollBeyondLastLine: false,
           automaticLayout: true,
+          padding: { top: 16, bottom: 16 },
+          smoothScrolling: true,
+          cursorBlinking: "smooth",
+          lineNumbersMinChars: 3,
         }}
       />
     </div>
   )
 }
+

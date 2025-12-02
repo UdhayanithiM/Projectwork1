@@ -16,7 +16,7 @@ import { Users, Search, FilePlus2, LoaderCircle, CheckCircle, Clock, Eye, MoreHo
 import { ModeToggle } from '@/components/mode-toggle';
 import { useAuthStore } from '@/stores/authStore';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -349,3 +349,4 @@ export default function HrDashboardUpgraded() {
     </>
   );
 }
+

@@ -10,3 +10,4 @@ declare module "@splinetool/react-spline" {
   const Spline: React.FC<SplineProps>;
   export default Spline;
 }
+

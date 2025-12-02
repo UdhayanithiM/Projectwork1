@@ -1,209 +1,324 @@
-'use client';
+"use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+
+import {
+  Calendar,
+  Clock,
+  Code,
+  MessageSquare,
+  Search,
+  Filter,
+  ArrowUpRight,
+  MoreVertical,
+  Play,
+} from "lucide-react";
+
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { GlassPanel } from "@/components/ui/glass-panel";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MoreHorizontal, Video, MessageSquare, FileText, ArrowRight, CalendarPlus } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// --- Data Types and Sample Data ---
-type InterviewStatus = "Scheduled" | "Completed" | "In Progress";
-type InterviewType = "Video" | "Text" | "Assessment";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-interface Interview {
+import { useAuthStore } from "@/stores/authStore";
+
+
+// ======================================================
+// TYPES
+// ======================================================
+
+type Assessment = {
   id: string;
-  type: InterviewType;
-  position: string;
-  date: string;
-  status: InterviewStatus;
-  interviewer: string;
-}
+  title: string;
+  status: "PENDING" | "COMPLETED" | "IN_PROGRESS";
+  createdAt: string;
+  type: "TECHNICAL" | "BEHAVIORAL" | "MIXED";
+  score?: number;
+};
 
-const interviews: Interview[] = [
-  { id: "INT-001", type: "Video", position: "Product Manager", date: "2025-05-20", status: "Completed", interviewer: "Dr. Evelyn Reed" },
-  { id: "INT-002", type: "Video", position: "Software Engineer", date: "2025-08-28", status: "Scheduled", interviewer: "Mr. Ken Alvarez" },
-  { id: "INT-003", type: "Text", position: "Software Engineer", date: "2025-09-05", status: "Scheduled", interviewer: "AI Assistant" },
-  { id: "INT-004", type: "Assessment", position: "Software Engineer", date: "2025-05-18", status: "Completed", interviewer: "N/A" },
-];
 
-// --- Animation Variants ---
+// ======================================================
+// MOTION ANIMATIONS
+// ======================================================
+
 const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: { staggerChildren: 0.1 },
-    },
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06 },
+  },
 };
 
 const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
+  hidden: { opacity: 0, y: 14 },
+  visible: { opacity: 1, y: 0 },
 };
 
-// --- Helper Components ---
 
-const InterviewIcon = ({ type }: { type: InterviewType }) => {
-    const icons: Record<InterviewType, React.ReactNode> = {
-        Video: <Video className="h-5 w-5" />,
-        Text: <MessageSquare className="h-5 w-5" />,
-        Assessment: <FileText className="h-5 w-5" />,
-    };
-    return <div className="p-3 bg-muted rounded-lg text-muted-foreground">{icons[type]}</div>;
-};
+// ======================================================
+// PAGE
+// ======================================================
 
-const StatusBadge = ({ status }: { status: InterviewStatus }) => (
-    <Badge
-        className={cn(
-            "capitalize",
-            status === 'Completed' && 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300',
-            status === 'Scheduled' && 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300',
-            status === 'In Progress' && 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300'
-        )}
-    >
-        {status}
-    </Badge>
-);
-
-const EmptyState = ({ title, description }: { title: string, description: string }) => (
-    <div className="text-center py-16 border-2 border-dashed rounded-lg">
-        <div className="inline-block bg-muted p-4 rounded-full mb-4">
-            <CalendarPlus className="h-8 w-8 text-muted-foreground" />
-        </div>
-        <h3 className="text-xl font-semibold">{title}</h3>
-        <p className="text-muted-foreground mt-2">{description}</p>
-        <Button asChild variant="outline" className="mt-4">
-            <Link href="/assessment-list">Browse Assessments</Link>
-        </Button>
-    </div>
-);
-
-
-// --- Main Page Component ---
 export default function InterviewsPage() {
-    const upcomingInterviews = interviews.filter(i => i.status !== 'Completed');
-    const completedInterviews = interviews.filter(i => i.status === 'Completed');
+  const { user } = useAuthStore();
 
-    return (
-        <motion.div 
-            className="flex flex-1 flex-col gap-6 p-4 md:p-8"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Fetch assessments (replace with real API)
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch("/api/candidate/assessments");
+        if (res.ok) {
+          const data = await res.json();
+          setAssessments(data);
+        }
+      } catch (error) {
+        console.error("Failed to load interviews", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (user) fetchData();
+  }, [user]);
+
+  const filteredAssessments = assessments.filter((a) =>
+    [a.title, a.status].some((x) =>
+      x.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
+
+  return (
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-gradient">
+            My Interviews
+          </h1>
+          <p className="text-muted-foreground">
+            Track your progress and review past performance.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="border-white/10 bg-white/5">
+            <Filter className="mr-2 h-4 w-4" /> Filter
+          </Button>
+
+          <Button className="shadow-lg shadow-primary/20" asChild>
+            <Link href="/technical-assessment/new">
+              <Play className="mr-2 h-4 w-4" /> New Mock Interview
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by title or status..."
+          className="pl-10 h-12 bg-white/5 border-white/10 focus:border-primary/50 transition-all"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      {/* Content */}
+      {isLoading ? (
+        <LoadingGrid />
+      ) : filteredAssessments.length === 0 ? (
+        <EmptyState />
+      ) : (
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
         >
-            <div>
-                <h1 className="font-semibold text-2xl md:text-3xl">My Interviews & Assessments</h1>
-                <p className="text-muted-foreground">
-                    Review your scheduled and completed sessions.
-                </p>
+          {filteredAssessments.map((assessment) => (
+            <InterviewCard key={assessment.id} assessment={assessment} />
+          ))}
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+
+// ======================================================
+// EMPTY STATE
+// ======================================================
+
+function EmptyState() {
+  return (
+    <GlassPanel className="flex flex-col items-center justify-center py-16 text-center border-dashed border-white/10">
+      <div className="h-16 w-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+        <MessageSquare className="h-8 w-8 text-muted-foreground" />
+      </div>
+
+      <h3 className="text-lg font-semibold">No interviews found</h3>
+
+      <p className="text-muted-foreground max-w-sm mt-2 mb-6">
+        You haven't taken any interviews yet. Start a new session to test your
+        skills.
+      </p>
+
+      <Button asChild>
+        <Link href="/technical-assessment/new">Start Assessment</Link>
+      </Button>
+    </GlassPanel>
+  );
+}
+
+
+// ======================================================
+// LOADING GRID
+// ======================================================
+
+function LoadingGrid() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <Skeleton key={i} className="h-[200px] w-full rounded-xl bg-white/5" />
+      ))}
+    </div>
+  );
+}
+
+
+// ======================================================
+// INTERVIEW CARD
+// ======================================================
+
+function InterviewCard({ assessment }: { assessment: Assessment }) {
+  const statusMap = {
+    COMPLETED: { label: "Completed", color: "success" },
+    PENDING: { label: "Pending", color: "warning" },
+    IN_PROGRESS: { label: "In Progress", color: "info" },
+  };
+
+  const status = statusMap[assessment.status];
+
+  return (
+    <motion.div variants={itemVariants}>
+      <GlassPanel className="h-full flex flex-col justify-between group transition-all">
+        <div>
+          <div className="flex justify-between items-start mb-4">
+            <Badge variant="outline" className={`text-${status.color}`}>
+              {status.label}
+            </Badge>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent
+                align="end"
+                className="bg-[#0a0a0b] border-white/10"
+              >
+                <DropdownMenuItem asChild>
+                  <Link href={`/report/${assessment.id}`}>View Report</Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem className="text-destructive">
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors line-clamp-1">
+            {assessment.title || "Technical Assessment"}
+          </h3>
+
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span>
+                {new Date(assessment.createdAt).toLocaleDateString()}
+              </span>
             </div>
 
-            <Tabs defaultValue="upcoming">
-                <TabsList className="grid w-full max-w-md grid-cols-2">
-                    <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-                    <TabsTrigger value="completed">Completed</TabsTrigger>
-                </TabsList>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span>45 mins</span>
+            </div>
 
-                <TabsContent value="upcoming" className="mt-6">
-                    {upcomingInterviews.length > 0 ? (
-                        <motion.div 
-                            className="grid gap-6"
-                            variants={containerVariants}
-                            initial="hidden"
-                            animate="visible"
-                        >
-                            {upcomingInterviews.map((interview) => (
-                                <motion.div variants={itemVariants} key={interview.id}>
-                                    <Card>
-                                        <CardContent className="p-6 flex items-center gap-6">
-                                            <InterviewIcon type={interview.type} />
-                                            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                                                <div>
-                                                    <p className="font-semibold">{interview.position}</p>
-                                                    <p className="text-sm text-muted-foreground">{interview.type} Interview</p>
-                                                </div>
-                                                <div>
-                                                    <p className="font-semibold">{interview.date}</p>
-                                                    <p className="text-sm text-muted-foreground">with {interview.interviewer}</p>
-                                                </div>
-                                                <div className="flex items-center justify-start md:justify-center">
-                                                    <StatusBadge status={interview.status} />
-                                                </div>
-                                            </div>
-                                            <Button asChild className="ml-auto hidden md:inline-flex">
-                                                <Link href="/take-interview">
-                                                    Join Interview <ArrowRight className="ml-2 h-4 w-4" />
-                                                </Link>
-                                            </Button>
-                                        </CardContent>
-                                         <CardFooter className="md:hidden bg-muted/50 p-4">
-                                             <Button asChild className="w-full">
-                                                <Link href="/take-interview">
-                                                    Join Interview <ArrowRight className="ml-2 h-4 w-4" />
-                                                </Link>
-                                            </Button>
-                                        </CardFooter>
-                                    </Card>
-                                </motion.div>
-                            ))}
-                        </motion.div>
-                    ) : (
-                        <EmptyState 
-                            title="No Upcoming Interviews"
-                            description="You have no interviews scheduled. Get started by taking an assessment."
-                        />
-                    )}
-                </TabsContent>
+            <div className="flex items-center gap-2">
+              <Code className="h-4 w-4" />
+              <span>{assessment.type}</span>
+            </div>
+          </div>
+        </div>
 
-                <TabsContent value="completed" className="mt-6">
-                    {completedInterviews.length > 0 ? (
-                         <motion.div 
-                            className="grid gap-6"
-                            variants={containerVariants}
-                            initial="hidden"
-                            animate="visible"
-                        >
-                            {completedInterviews.map((interview) => (
-                                <motion.div variants={itemVariants} key={interview.id}>
-                                    <Card>
-                                        <CardContent className="p-6 flex items-center gap-6">
-                                            <InterviewIcon type={interview.type} />
-                                            <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                                                <div>
-                                                    <p className="font-semibold">{interview.position}</p>
-                                                    <p className="text-sm text-muted-foreground">{interview.type} Interview</p>
-                                                </div>
-                                                <div>
-                                                    <p className="font-semibold">{interview.date}</p>
-                                                    <p className="text-sm text-muted-foreground">with {interview.interviewer}</p>
-                                                </div>
-                                                <div className="flex items-center justify-start md:justify-center">
-                                                    <StatusBadge status={interview.status} />
-                                                </div>
-                                            </div>
-                                            <Button asChild variant="secondary" className="ml-auto hidden md:inline-flex">
-                                                <Link href="/report">View Report</Link>
-                                            </Button>
-                                        </CardContent>
-                                         <CardFooter className="md:hidden bg-muted/50 p-4">
-                                             <Button asChild variant="secondary" className="w-full">
-                                                <Link href="/report">View Report</Link>
-                                            </Button>
-                                        </CardFooter>
-                                    </Card>
-                                </motion.div>
-                            ))}
-                        </motion.div>
-                    ) : (
-                         <EmptyState 
-                            title="No Completed Interviews"
-                            description="Your completed interviews and reports will appear here."
-                        />
-                    )}
-                </TabsContent>
-            </Tabs>
-        </motion.div>
-    );
+        <div className="mt-6 pt-6 border-t border-white/5 flex items-center justify-between">
+          {assessment.status === "COMPLETED" &&
+          assessment.score !== undefined ? (
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                Score
+              </span>
+              <span
+                className={`text-xl font-bold ${
+                  assessment.score >= 70 ? "text-success" : "text-warning"
+                }`}
+              >
+                {assessment.score}%
+              </span>
+            </div>
+          ) : (
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground uppercase tracking-wider">
+                Action
+              </span>
+              <span className="text-sm font-medium text-foreground">
+                Resume Session
+              </span>
+            </div>
+          )}
+
+          <Button
+            size="sm"
+            variant={assessment.status === "COMPLETED" ? "outline" : "default"}
+            className="gap-1"
+            asChild
+          >
+            <Link
+              href={
+                assessment.status === "COMPLETED"
+                  ? `/report/${assessment.id}`
+                  : `/take-interview/${assessment.id}`
+              }
+            >
+              {assessment.status === "COMPLETED" ? "Analysis" : "Continue"}
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </GlassPanel>
+    </motion.div>
+  );
 }
+

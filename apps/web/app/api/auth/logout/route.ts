@@ -7,3 +7,4 @@ export async function POST() {
   response.cookies.set('token', '', { httpOnly: true, maxAge: 0, path: '/' });
   return response;
 }
+

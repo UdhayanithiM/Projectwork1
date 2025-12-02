@@ -1,6 +1,5 @@
 // apps/web/app/take-interview/[assessmentId]/page.tsx
-
-'use client';
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -10,28 +9,23 @@ import { Clock, Gauge, CircleDashed, LoaderCircle, Smile, Meh, Frown } from "luc
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { io, type Socket } from "socket.io-client";
-import { ChatWindow } from "@/components/interview/ChatWindow";
-import { VoiceWindow } from "@/components/interview/VoiceWindow";
+import { ChatWindow } from "@/components/features/interview/ChatWindow";
+import { VoiceWindow } from "@/components/features/interview/VoiceWindow";
 import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-
-// -----------------------------------------------------
-// HEADER
-// -----------------------------------------------------
+// --- Header
 const InterviewHeader = ({
   timer,
   onEndInterview,
@@ -50,7 +44,6 @@ const InterviewHeader = ({
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur">
       <div className="container flex h-16 items-center justify-between">
-
         <div className="flex items-center gap-2">
           <Gauge className="h-6 w-6 text-primary" />
           <span className="font-bold text-lg">
@@ -59,7 +52,6 @@ const InterviewHeader = ({
         </div>
 
         <div className="flex items-center gap-4">
-
           <div className="flex items-center gap-2 text-sm font-medium">
             <Clock className="h-4 w-4" />
             <span>{formatTime(timer)}</span>
@@ -76,9 +68,6 @@ const InterviewHeader = ({
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>End Interview?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action is final. A performance report will be generated immediately.
-                </AlertDialogDescription>
               </AlertDialogHeader>
 
               <AlertDialogFooter>
@@ -87,56 +76,49 @@ const InterviewHeader = ({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-
         </div>
       </div>
     </header>
   );
 };
 
-
-// -----------------------------------------------------
-// SIDEBAR (Analysis)
-// -----------------------------------------------------
+// --- Sidebar (analysis)
 const AnalysisSidebar = ({ analysisData }: { analysisData: any }) => {
   const getSentimentIcon = () => {
-    if (analysisData.sentiment.name === "positive")
-      return <Smile className="h-5 w-5 text-green-500" />;
-    if (analysisData.sentiment.name === "negative")
-      return <Frown className="h-5 w-5 text-red-500" />;
+    if (analysisData.sentiment?.name === "positive") return <Smile className="h-5 w-5 text-green-500" />;
+    if (analysisData.sentiment?.name === "negative") return <Frown className="h-5 w-5 text-red-500" />;
     return <Meh className="h-5 w-5 text-muted-foreground" />;
   };
 
   return (
     <ScrollArea className="h-full p-4">
       <div className="space-y-6">
-
         <Card>
           <CardHeader>
             <CardTitle>Real-time Analysis</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-
             <div>
               <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
                 Sentiment {getSentimentIcon()}
               </h3>
               <p className="text-sm text-muted-foreground bg-muted p-2 rounded-md">
-                {analysisData.sentiment.text}
+                {analysisData.sentiment?.text}
               </p>
             </div>
 
             <div>
               <h3 className="text-sm font-medium mb-3">Interview Progress</h3>
-              <Progress value={analysisData.progress} />
+              <Progress value={analysisData.progress ?? 0} />
             </div>
-
           </CardContent>
         </Card>
 
-        {analysisData.skills?.length > 0 && (
+        {Array.isArray(analysisData.skills) && analysisData.skills.length > 0 && (
           <Card>
-            <CardHeader><CardTitle>Detected Skills</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle>Detected Skills</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-3">
               {analysisData.skills.map((skill: any) => (
                 <div key={skill.name}>
@@ -152,22 +134,19 @@ const AnalysisSidebar = ({ analysisData }: { analysisData: any }) => {
         )}
 
         <Card>
-          <CardHeader><CardTitle>Tips</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Tips</CardTitle>
+          </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">{analysisData.tip}</p>
           </CardContent>
         </Card>
-
       </div>
     </ScrollArea>
   );
 };
 
-
-
-// -----------------------------------------------------
-// MAIN PAGE
-// -----------------------------------------------------
+// --- Page
 export default function TakeInterviewPage() {
   const router = useRouter();
   const params = useParams();
@@ -180,13 +159,9 @@ export default function TakeInterviewPage() {
   const [isEnding, setIsEnding] = useState(false);
   const [timer, setTimer] = useState(0);
 
-  // ✅ NEW: Track when the backend session is actually ready
   const [isSessionReady, setIsSessionReady] = useState(false);
-
-  // SWITCHING BETWEEN TEXT + VOICE
   const [interviewMode, setInterviewMode] = useState<"text" | "voice">("text");
 
-  // MOCK ANALYSIS
   const [analysisData, setAnalysisData] = useState({
     sentiment: { name: "neutral", text: "Analyzing your responses..." },
     progress: 10,
@@ -197,26 +172,21 @@ export default function TakeInterviewPage() {
     tip: "Speak clearly and take your time answering.",
   });
 
-  // -----------------------------------------------
-  // 1. INIT SESSION (Must complete before sockets connect)
-  // -----------------------------------------------
+  // 1) Initialize backend session
   useEffect(() => {
     if (!assessmentId) return;
 
+    let mounted = true;
     const initSession = async () => {
       try {
-        console.log("Initializing AI Session...");
         const res = await fetch(`/api/assessment/${assessmentId}/start`, { method: "POST" });
-        
         if (!res.ok) {
-          const err = await res.text();
-          throw new Error(err || "Failed to start AI session");
+          const text = await res.text().catch(() => "Failed");
+          throw new Error(text || "Failed to start AI session");
         }
-        
-        console.log("✅ AI Session Initialized");
-        setIsSessionReady(true); // Unlock the UI and Socket connections
-      } catch (error: any) {
-        console.error("Session Init Error:", error);
+        if (mounted) setIsSessionReady(true);
+      } catch (err) {
+        console.error("Session Init Error:", err);
         toast({
           variant: "destructive",
           title: "System Warning",
@@ -224,32 +194,42 @@ export default function TakeInterviewPage() {
         });
       }
     };
-
     initSession();
+    return () => {
+      mounted = false;
+    };
   }, [assessmentId, toast]);
 
-  // -----------------------------------------------
-  // 2. CONNECT SOCKET (Only after isSessionReady)
-  // -----------------------------------------------
+  // 2) Connect socket only after session ready
   useEffect(() => {
-    // IMPORTANT: Do NOT connect until session is ready on backend
     if (!assessmentId || !isSessionReady) return;
 
-    const newSocket = io({ withCredentials: true });
+    // connect to same origin - ensures cookies/CORS behave as expected
+    const url = window.location.origin;
+    const newSocket: Socket = io(url, {
+      withCredentials: true,
+      transports: ["websocket"],
+    });
 
     newSocket.on("connect", () => {
-      console.log("✅ Socket connected:", newSocket.id);
+      console.log("Socket connected", newSocket.id);
       setIsConnected(true);
       newSocket.emit("joinInterview", assessmentId);
     });
 
     newSocket.on("disconnect", () => {
-      console.log("❌ Socket disconnected");
+      console.log("Socket disconnected");
       setIsConnected(false);
     });
 
-    newSocket.on("connect_error", (err) => {
-        console.error("Socket Connection Error:", err.message);
+    newSocket.on("connect_error", (err: any) => {
+      console.error("Socket connect_error", err);
+      toast({ variant: "destructive", title: "Socket Error", description: err?.message ?? "Connection failed" });
+    });
+
+    // example server -> client update (adjust to your server events)
+    newSocket.on("analysisUpdate", (payload: any) => {
+      setAnalysisData((prev) => ({ ...prev, ...payload }));
     });
 
     setSocket(newSocket);
@@ -257,45 +237,43 @@ export default function TakeInterviewPage() {
     const timerInterval = setInterval(() => setTimer((t) => t + 1), 1000);
 
     return () => {
-      console.log("Cleaning up socket");
-      newSocket.disconnect();
       clearInterval(timerInterval);
+      try {
+        newSocket.disconnect();
+      } catch (e) {
+        /* ignore */
+      }
+      setSocket(null);
     };
-  }, [assessmentId, isSessionReady]); // Added isSessionReady dependency
+  }, [assessmentId, isSessionReady, toast]);
 
-
-  // -----------------------------------------------
-  // END INTERVIEW
-  // -----------------------------------------------
+  // 3) End interview
   const handleEndInterview = useCallback(async () => {
     if (!assessmentId) return;
-
     setIsEnding(true);
     toast({ title: "Finishing...", description: "Generating your report..." });
 
     try {
       const res = await fetch(`/api/assessment/${assessmentId}/finish`, { method: "POST" });
-      if (!res.ok) throw new Error("Failed to submit interview");
+      if (!res.ok) {
+        const text = await res.text().catch(() => "Failed");
+        throw new Error(text || "Failed to finish");
+      }
 
       toast({ title: "Interview Completed!", description: "Redirecting..." });
-
       socket?.disconnect();
-
-      setTimeout(() => router.push("/dashboard"), 1500);
+      setTimeout(() => router.push("/dashboard"), 1200);
     } catch (err: any) {
       toast({
         variant: "destructive",
         title: "Submission Error",
-        description: err.message,
+        description: err?.message ?? "Failed to finish interview",
       });
       setIsEnding(false);
     }
   }, [socket, assessmentId, router, toast]);
 
-
-  // -----------------------------------------------
-  // LOADING / ERROR STATES
-  // -----------------------------------------------
+  // 4) Early states
   if (!assessmentId) {
     return <div className="p-10 text-center">Invalid Assessment ID</div>;
   }
@@ -309,17 +287,13 @@ export default function TakeInterviewPage() {
     );
   }
 
-  // -----------------------------------------------------
-  // RENDER MAIN UI
-  // -----------------------------------------------------
+  // 5) Render UI
   return (
     <div className="min-h-screen bg-background flex flex-col">
-
       <InterviewHeader timer={timer} onEndInterview={handleEndInterview} isEnding={isEnding} />
 
-      {/* TEXT / VOICE SWITCH */}
       <div className="border-b bg-muted/40 p-2 flex justify-center">
-        <Tabs value={interviewMode} onValueChange={(v) => setInterviewMode(v as "text" | "voice")}>
+        <Tabs value={interviewMode} onValueChange={(v: string) => setInterviewMode(v as "text" | "voice")}>
           <TabsList>
             <TabsTrigger value="text">Text Interview</TabsTrigger>
             <TabsTrigger value="voice">Voice Interview (Live)</TabsTrigger>
@@ -327,34 +301,21 @@ export default function TakeInterviewPage() {
         </Tabs>
       </div>
 
-
       <ResizablePanelGroup direction="horizontal" className="flex-1">
-
-        {/* LEFT PANEL */}
         <ResizablePanel defaultSize={75} minSize={50}>
           {interviewMode === "text" ? (
-            isConnected ? (
-              <ChatWindow socket={socket} interviewId={assessmentId} />
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <CircleDashed className="h-10 w-10 animate-spin text-muted-foreground" />
-              </div>
-            )
+            // pass socket (may be null early) and non-null assessmentId
+            <ChatWindow socket={socket} interviewId={assessmentId!} />
           ) : (
-            <VoiceWindow interviewId={assessmentId} />
+            <VoiceWindow interviewId={assessmentId!} />
           )}
         </ResizablePanel>
 
-
-        {/* DRAG HANDLE */}
         <ResizableHandle withHandle />
 
-
-        {/* RIGHT PANEL */}
         <ResizablePanel defaultSize={25} minSize={20} className="hidden md:block">
           <AnalysisSidebar analysisData={analysisData} />
         </ResizablePanel>
-
       </ResizablePanelGroup>
     </div>
   );

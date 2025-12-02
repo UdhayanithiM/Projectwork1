@@ -47,3 +47,6 @@ declare global {
     availability(): Promise<'available' | 'downloadable' | 'unavailable'>;
   };
 }
+
+
+

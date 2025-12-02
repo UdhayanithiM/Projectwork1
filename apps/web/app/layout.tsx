@@ -1,61 +1,92 @@
 /**
- * FortiTwin - Root Layout (Server Component)
- * This component handles global metadata, fonts, and the root HTML structure.
- * All client-side logic is delegated to the <Providers> component.
+ * FortiTwin 2.0 — Root Layout (Server Component)
+ * Defines global fonts, metadata, theme, and wraps the entire app with Providers.
  */
 
-import type React from "react";
-import "@/app/globals.css";
-import { Inter as FontSans } from "next/font/google";
+import type { ReactNode } from "react";
+import "./globals.css"; // Ensure this import path is correct based on your file structure
+
+import {
+  Outfit,
+  Space_Grotesk,
+  JetBrains_Mono,
+} from "next/font/google";
+
 import type { Metadata, Viewport } from "next";
 import { cn } from "@/lib/utils";
-import { Providers } from "@/components/providers"; // ✅ IMPORT the new component
+import { Providers } from "@/components/providers";
 
-// Font configuration remains the same
-const fontSans = FontSans({
+/* --------------------------------------------------
+   1. Font System (Design Tokens)
+-------------------------------------------------- */
+const fontHeading = Outfit({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-heading",
   display: "swap",
 });
 
-// Metadata configuration remains a server-side feature
+const fontBody = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const fontCode = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-code",
+  display: "swap",
+});
+
+/* --------------------------------------------------
+   2. Metadata (SEO-safe)
+-------------------------------------------------- */
 export const metadata: Metadata = {
   title: {
     default: "FortiTwin",
     template: "%s | FortiTwin",
   },
-  description: "A modern, AI-powered platform for conducting fair and effective interviews and assessments.",
-  // ... all your other metadata is correct
+  description:
+    "A modern, AI-powered platform for conducting fair and effective interviews and assessments.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
-// Viewport configuration remains a server-side feature
+/* --------------------------------------------------
+   3. Viewport (Deep Void Theme)
+-------------------------------------------------- */
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
-  // ... all your other viewport config is correct
+  themeColor: "#0a0a0b",
 };
 
-/**
- * Root layout component that wraps all pages
- */
+/* --------------------------------------------------
+   4. Root Layout
+-------------------------------------------------- */
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="manifest" href="/site.webmanifest" />
-      </head>
-      <body className={cn("min-h-screen bg-background font-sans antialiased scroll-smooth", fontSans.variable)}>
-        {/* ✅ WRAP children with the new Providers component */}
-        <Providers>
-          {children}
-        </Providers>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn(fontHeading.variable, fontBody.variable, fontCode.variable)}
+    >
+      <body
+        className={cn(
+          "min-h-screen bg-background font-body antialiased",
+          "selection:bg-primary/20 selection:text-primary",
+          // Smooth scrolling across the app
+          "scroll-smooth"
+        )}
+      >
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
 }
+

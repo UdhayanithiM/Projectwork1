@@ -35,3 +35,4 @@ export function PersonalityTraits({ currentQuestion }: PersonalityTraitsProps) {
     </Card>
   )
 }
+

@@ -600,3 +600,4 @@ export function HrProfessionalModel() {
     </div>
   );
 }
+

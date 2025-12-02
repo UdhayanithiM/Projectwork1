@@ -67,3 +67,4 @@ export function CandidateJourney({ activeStep, setActiveStep }: CandidateJourney
     </Card>
   )
 }
+

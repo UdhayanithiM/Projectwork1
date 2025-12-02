@@ -16,3 +16,4 @@ describe('Home Page', () => {
     expect(heading).toBeInTheDocument()
   })
 })
+

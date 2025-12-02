@@ -2,7 +2,7 @@
 
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import LoginPage from '@/app/login/page';
+import LoginPage from '@/app/(auth)/login/page';
 import { useAuthStore } from '@/stores/authStore';
 
 // Mock the next/navigation module
@@ -106,3 +106,4 @@ describe('Login Page', () => {
     expect(useAuthStore.getState().error).toBe('Invalid email or password');
   });
 });
+

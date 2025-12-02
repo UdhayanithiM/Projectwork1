@@ -29,3 +29,4 @@ if (typeof window !== 'undefined') {
   });
   window.ResizeObserver = jest.fn().mockImplementation(ResizeObserverMock);
 }
+

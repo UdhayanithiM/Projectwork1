@@ -1,6 +1,4 @@
-// in app/technical-assessment/[assessmentId]/page.tsx
-
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -9,11 +7,34 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { LoaderCircle, Terminal, CheckCircle, XCircle, Play, Send } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import Editor from '@monaco-editor/react';
+import { 
+  LoaderCircle, 
+  Terminal, 
+  CheckCircle, 
+  XCircle, 
+  Play, 
+  Send, 
+  Code2, 
+  Cpu, 
+  ArrowLeft 
+} from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+
+import { CodeEditor } from '@/components/code-editor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle, 
+  AlertDialogTrigger 
+} from "@/components/ui/alert-dialog";
+import { GlassPanel } from '@/components/ui/glass-panel';
+import { cn } from '@/lib/utils';
 
 // --- TYPE DEFINITIONS ---
 type Question = {
@@ -25,7 +46,7 @@ type Question = {
 };
 
 type AssessmentData = {
-  id:string;
+  id: string;
   status: string;
   technicalAssessment: {
     id: string;
@@ -61,7 +82,7 @@ export default function TechnicalAssessmentPage() {
   useEffect(() => {
     if (!assessmentId) return;
     const fetchAssessment = async () => {
-       try {
+      try {
         setIsLoading(true);
         const res = await fetch(`/api/assessment/${assessmentId}`);
         if (!res.ok) {
@@ -84,11 +105,11 @@ export default function TechnicalAssessmentPage() {
     fetchAssessment();
   }, [assessmentId, toast]);
 
-  // --- CORE LOGIC ---
+  // --- ACTIONS ---
   const handleRunCode = async () => {
     const questionIds = assessment?.technicalAssessment?.questions.map(q => q.id);
     if (!questionIds || questionIds.length === 0) {
-      toast({ title: "Error", description: "No questions found for evaluation.", variant: "destructive" });
+      toast({ title: "Error", description: "No questions found.", variant: "destructive" });
       return;
     }
 
@@ -105,10 +126,10 @@ export default function TechnicalAssessmentPage() {
       if (!res.ok) throw new Error(result.error || 'Failed to evaluate code.');
       
       setEvaluationResults(result.results[0].testCases);
-      toast({ title: "Evaluation Complete", description: "Check the results panel." });
+      toast({ title: "Evaluation Complete", description: "Check the results console." });
 
     } catch (err) {
-      toast({ title: "Evaluation Error", description: err instanceof Error ? err.message : 'An unknown error occurred.', variant: "destructive" });
+      toast({ title: "Error", description: "Evaluation failed.", variant: "destructive" });
     } finally {
       setIsEvaluating(false);
     }
@@ -122,7 +143,6 @@ export default function TechnicalAssessmentPage() {
           throw new Error("Assessment data is missing.");
       }
 
-      // Using the more robust submit endpoint now
       const res = await fetch('/api/assessment/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -136,170 +156,257 @@ export default function TechnicalAssessmentPage() {
       });
       
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Failed to submit assessment.');
+      if (!res.ok) throw new Error(result.error || 'Failed to submit.');
 
       toast({
-        title: "Assessment Submitted Successfully!",
-        description: `Your final score is ${result.score.toFixed(1)}%. Redirecting to dashboard...`,
-        className: "bg-green-100 dark:bg-green-900",
+        title: "Success!",
+        description: `Final Score: ${result.score.toFixed(1)}%. Redirecting...`,
+        variant: "success", // Uses our new variant
       });
 
-      // Redirect back to the dashboard after a short delay
       setTimeout(() => {
         router.push('/dashboard');
-        router.refresh(); // Tell Next.js to refetch server data on the dashboard
+        router.refresh();
       }, 2000);
 
     } catch (err) {
-      toast({ title: "Submission Error", description: err instanceof Error ? err.message : 'An unknown error occurred.', variant: "destructive" });
+      toast({ title: "Submission Failed", description: "Please try again.", variant: "destructive" });
       setIsSubmitting(false);
     }
   };
 
-
   const question = assessment?.technicalAssessment?.questions[0];
 
-  // --- RENDER LOGIC ---
+  // --- LOADING STATE ---
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
-        <p className="ml-4 text-lg">Loading Assessment...</p>
+      <div className="flex h-screen items-center justify-center bg-background flex-col gap-4">
+        <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
+        <p className="text-lg font-medium text-muted-foreground animate-pulse">Initializing Environment...</p>
       </div>
     );
   }
 
+  // --- ERROR STATE ---
   if (error || !question) {
     return (
       <div className="flex h-screen items-center justify-center bg-background p-4">
-        <Alert variant="destructive" className="max-w-md">
-          <Terminal className="h-4 w-4" />
-          <AlertTitle>Error Loading Assessment</AlertTitle>
-          <AlertDescription>
-            {error || 'The requested assessment could not be found or is invalid.'}
-            <Button variant="link" onClick={() => router.push('/dashboard')}>Return to Dashboard</Button>
-          </AlertDescription>
-        </Alert>
+        <GlassPanel className="max-w-md p-8 text-center border-destructive/30">
+          <Terminal className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-destructive mb-2">Error Loading Assessment</h2>
+          <p className="text-muted-foreground mb-6">{error || 'Invalid assessment data.'}</p>
+          <Button variant="outline" onClick={() => router.push('/dashboard')}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Return to Dashboard
+          </Button>
+        </GlassPanel>
       </div>
     );
   }
 
+  // --- IDE LAYOUT ---
   return (
-    <div className="h-screen w-screen overflow-hidden bg-background text-foreground">
-      <header className="flex h-16 items-center justify-between border-b px-6 bg-card">
-        <h1 className="text-xl font-bold">
-          <span className="text-primary">Forti</span>Twin Technical Assessment
-        </h1>
-        <div className="flex items-center gap-4">
-            {/* THIS IS THE NEW SUBMIT BUTTON WRAPPED IN A CONFIRMATION DIALOG */}
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button variant="destructive" disabled={isSubmitting}>
-                        {isSubmitting ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" />}
-                        Submit Final Assessment
-                    </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This action is final. You will not be able to change your code after submission. Your score will be calculated and saved.
-                    </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleSubmitAssessment}>Continue & Submit</AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+    <div className="h-screen w-screen flex flex-col bg-background text-foreground overflow-hidden">
+      
+      {/* 1. IDE Header */}
+      <header className="h-14 shrink-0 border-b border-white/10 bg-[#0a0a0b] flex items-center justify-between px-4 z-50">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="text-muted-foreground hover:text-white">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex items-center gap-2">
+            <Cpu className="h-5 w-5 text-primary" />
+            <span className="font-bold text-sm tracking-wide">
+              <span className="text-primary">Forti</span>Twin IDE
+            </span>
+          </div>
+          <div className="h-4 w-[1px] bg-white/10 mx-2" />
+          <h1 className="text-sm font-medium text-muted-foreground truncate max-w-[200px]">
+            {question.title}
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Select value={language} onValueChange={setLanguage}>
+            <SelectTrigger className="w-[140px] h-8 bg-white/5 border-white/10 text-xs">
+              <SelectValue placeholder="Language" />
+            </SelectTrigger>
+            <SelectContent className="bg-[#1e1e1e] border-white/10">
+              <SelectItem value="javascript">JavaScript</SelectItem>
+              <SelectItem value="python">Python</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="default" disabled={isSubmitting} className="h-8 shadow-lg shadow-green-900/20">
+                {isSubmitting ? <LoaderCircle className="mr-2 h-3 w-3 animate-spin"/> : <Send className="mr-2 h-3 w-3" />}
+                Submit
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-[#0a0a0b] border-white/10">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Submit Assessment?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will finalize your score. You cannot edit your code afterwards.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="border-white/10 hover:bg-white/5">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSubmitAssessment} className="bg-primary hover:bg-primary/90">
+                  Confirm Submission
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </header>
 
-      <ResizablePanelGroup direction="horizontal" className="h-[calc(100vh-4rem)]">
-        {/* Left Panel: Question Description */}
-        <ResizablePanel defaultSize={40} minSize={25}>
-          <ScrollArea className="h-full p-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <h2 className="text-2xl font-semibold">{question.title}</h2>
-                <Badge>{question.difficulty}</Badge>
-              </div>
-              <p className="text-muted-foreground whitespace-pre-wrap">{question.description}</p>
-              
-              <div className="mt-6">
-                <h3 className="font-semibold mb-2">Example Test Case:</h3>
-                <div className="bg-muted p-4 rounded-md text-sm font-mono">
-                  <p>Input: {JSON.stringify(question.testCases[0].input)}</p>
-                  <p>Expected Output: {JSON.stringify(question.testCases[0].expectedOutput)}</p>
+      {/* 2. Main Workspace */}
+      <ResizablePanelGroup direction="horizontal" className="flex-1">
+        
+        {/* LEFT PANEL: Problem Description */}
+        <ResizablePanel defaultSize={35} minSize={25} className="bg-background">
+          <ScrollArea className="h-full">
+            <div className="p-6 space-y-6">
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <Badge variant="outline" className={cn(
+                    "text-xs px-2 py-0.5 border-white/20",
+                    question.difficulty === "Hard" ? "bg-red-500/10 text-red-400" :
+                    question.difficulty === "Medium" ? "bg-yellow-500/10 text-yellow-400" :
+                    "bg-green-500/10 text-green-400"
+                  )}>
+                    {question.difficulty}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">Technical Assessment</span>
+                </div>
+                <h2 className="text-2xl font-bold mb-4 text-gradient w-fit">{question.title}</h2>
+                <div className="prose prose-invert prose-sm max-w-none text-muted-foreground/90 leading-relaxed">
+                  {question.description}
                 </div>
               </div>
+
+              {/* Example Case */}
+              <GlassPanel className="p-4 bg-white/5 border-white/10 space-y-3">
+                <div className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wider">
+                  <Code2 className="h-3 w-3" /> Example Case
+                </div>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-[80px_1fr] gap-2 text-sm">
+                    <span className="text-muted-foreground font-mono">Input:</span>
+                    <code className="bg-black/30 px-2 py-0.5 rounded text-green-300 font-mono">
+                      {JSON.stringify(question.testCases[0]?.input)}
+                    </code>
+                  </div>
+                  <div className="grid grid-cols-[80px_1fr] gap-2 text-sm">
+                    <span className="text-muted-foreground font-mono">Output:</span>
+                    <code className="bg-black/30 px-2 py-0.5 rounded text-yellow-300 font-mono">
+                      {JSON.stringify(question.testCases[0]?.expectedOutput)}
+                    </code>
+                  </div>
+                </div>
+              </GlassPanel>
             </div>
           </ScrollArea>
         </ResizablePanel>
 
-        <ResizableHandle withHandle />
+        <ResizableHandle withHandle className="bg-white/5 hover:bg-primary/50 transition-colors w-1" />
 
-        {/* Right Panel: Code Editor and Output */}
-        <ResizablePanel defaultSize={60} minSize={40}>
+        {/* RIGHT PANEL: Editor & Console */}
+        <ResizablePanel defaultSize={65} minSize={40}>
           <ResizablePanelGroup direction="vertical">
-            <ResizablePanel defaultSize={75} minSize={50}>
-                <div className="flex h-full flex-col">
-                    <div className="flex items-center justify-between p-2 border-b">
-                         <Select value={language} onValueChange={setLanguage}>
-                            <SelectTrigger className="w-[180px]">
-                                <SelectValue placeholder="Select Language" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="javascript">JavaScript</SelectItem>
-                                <SelectItem value="python">Python</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <Editor
-                        height="100%"
-                        language={language}
-                        theme="vs-dark"
-                        value={code}
-                        onChange={(value) => setCode(value || '')}
-                        options={{ minimap: { enabled: false } }}
-                    />
+            
+            {/* EDITOR AREA */}
+            <ResizablePanel defaultSize={70} minSize={30} className="relative">
+              <CodeEditor 
+                value={code} 
+                onChange={setCode} 
+                language={language}
+                className="bg-[#1e1e1e]" // Explicit VS Code Dark background
+              />
+              {/* Floating Run Button */}
+              <div className="absolute bottom-4 right-4 z-10">
+                <Button 
+                  size="sm" 
+                  onClick={handleRunCode} 
+                  disabled={isEvaluating || isSubmitting}
+                  className="shadow-xl shadow-primary/20 hover:scale-105 transition-transform"
+                >
+                  {isEvaluating ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin"/> : <Play className="mr-2 h-4 w-4 fill-current" />}
+                  Run Code
+                </Button>
+              </div>
+            </ResizablePanel>
+
+            <ResizableHandle withHandle className="bg-white/5 hover:bg-primary/50 transition-colors h-1" />
+
+            {/* CONSOLE AREA */}
+            <ResizablePanel defaultSize={30} minSize={10} className="bg-[#0a0a0b]">
+              <div className="h-full flex flex-col">
+                <div className="h-9 border-b border-white/10 px-4 flex items-center gap-2 bg-white/5">
+                  <Terminal className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs font-mono text-muted-foreground uppercase">Console Output</span>
                 </div>
-            </ResizablePanel>
-            <ResizableHandle withHandle />
-            <ResizablePanel defaultSize={25} minSize={15}>
-                 <div className="h-full flex flex-col">
-                    <div className="flex items-center justify-between p-2 border-b">
-                        <h3 className="text-lg font-semibold">Results</h3>
-                         <Button size="sm" onClick={handleRunCode} disabled={isEvaluating || isSubmitting}>
-                            {isEvaluating ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin"/> : <Play className="mr-2 h-4 w-4" />}
-                            Run Code
-                        </Button>
+                
+                <ScrollArea className="flex-1 p-4 font-mono text-sm">
+                  {!evaluationResults && !isEvaluating && (
+                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground/50 gap-2">
+                      <Terminal className="h-8 w-8 opacity-20" />
+                      <p>Run your code to see results here.</p>
                     </div>
-                    <ScrollArea className="flex-1 p-4">
-                        {!evaluationResults && <p className="text-muted-foreground">Click "Run Code" to see test results.</p>}
-                        {isEvaluating && <LoaderCircle className="h-6 w-6 animate-spin" />}
-                        {evaluationResults && (
-                            <div className="space-y-2">
-                                {evaluationResults.map((result, index) => (
-                                    <div key={index} className={`flex items-start p-2 rounded-md ${result.status === 'passed' ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                                        {result.status === 'passed' ? <CheckCircle className="h-5 w-5 text-green-500 mr-3 mt-1"/> : <XCircle className="h-5 w-5 text-red-500 mr-3 mt-1"/>}
-                                        <div>
-                                            <p className="font-semibold">Test Case #{index + 1}: {result.status.toUpperCase()}</p>
-                                            {result.status === 'failed' && (
-                                                <div className="text-xs mt-1 font-mono">
-                                                    <p>Expected: {JSON.stringify(result.expected)}</p>
-                                                    <p>Got: {JSON.stringify(result.actual)}</p>
-                                                </div>
-                                            )}
-                                            {result.status === 'error' && <p className="text-xs mt-1 font-mono text-red-400">{result.message}</p>}
-                                        </div>
-                                    </div>
-                                ))}
+                  )}
+                  
+                  {isEvaluating && (
+                    <div className="flex items-center gap-2 text-primary animate-pulse">
+                      <LoaderCircle className="h-4 w-4 animate-spin" />
+                      Evaluating against test cases...
+                    </div>
+                  )}
+
+                  {evaluationResults && (
+                    <div className="space-y-3">
+                      {evaluationResults.map((result, index) => (
+                        <div key={index} className={cn(
+                          "flex items-start gap-3 p-3 rounded border text-xs",
+                          result.status === 'passed' 
+                            ? "bg-green-500/5 border-green-500/20 text-green-300" 
+                            : "bg-red-500/5 border-red-500/20 text-red-300"
+                        )}>
+                          {result.status === 'passed' 
+                            ? <CheckCircle className="h-4 w-4 shrink-0 text-green-500 mt-0.5"/> 
+                            : <XCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5"/>
+                          }
+                          <div className="space-y-1 w-full">
+                            <div className="flex justify-between font-semibold">
+                              <span>Test Case #{index + 1}</span>
+                              <span className="uppercase">{result.status}</span>
                             </div>
-                        )}
-                    </ScrollArea>
-                 </div>
+                            
+                            {result.status === 'failed' && (
+                              <div className="mt-2 p-2 bg-black/40 rounded border border-white/5 space-y-1">
+                                <div className="flex gap-2">
+                                  <span className="text-muted-foreground w-16">Expected:</span>
+                                  <span className="text-green-400">{JSON.stringify(result.expected)}</span>
+                                </div>
+                                <div className="flex gap-2">
+                                  <span className="text-muted-foreground w-16">Actual:</span>
+                                  <span className="text-red-400">{JSON.stringify(result.actual)}</span>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {result.status === 'error' && (
+                              <p className="mt-1 text-red-400 break-all">{result.message}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
             </ResizablePanel>
+
           </ResizablePanelGroup>
         </ResizablePanel>
       </ResizablePanelGroup>

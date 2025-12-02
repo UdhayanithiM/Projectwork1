@@ -26,3 +26,6 @@ export const setSession = (key: string, value: any, expirationInSeconds = 3600) 
     EX: expirationInSeconds, // Expire sessions after 1 hour of inactivity
   });
 };
+
+
+

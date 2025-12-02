@@ -1,0 +1,42 @@
+import { ReactNode } from "react";
+import Link from "next/link";
+import { Gauge } from "lucide-react";
+import { GlassPanel } from "@/components/ui/glass-panel";
+
+export default function AuthLayout({ children }: { children: ReactNode }) {
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-background">
+      
+      {/* Ambient Background Effects */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-primary/20 blur-[120px] rounded-full pointer-events-none -z-10 opacity-50 mix-blend-screen animate-pulse-soft" />
+      <div className="absolute bottom-0 right-0 w-[800px] h-[600px] bg-secondary/10 blur-[100px] rounded-full pointer-events-none -z-10 opacity-30" />
+
+      <div className="w-full max-w-md p-4 relative z-10">
+        {/* Logo Header */}
+        <div className="flex justify-center mb-8">
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="p-2 rounded-xl bg-white/5 border border-white/10 group-hover:border-primary/50 transition-colors">
+              <Gauge className="h-6 w-6 text-primary" />
+            </div>
+            <span className="font-bold text-2xl tracking-tight">
+              <span className="text-primary">Forti</span>Twin
+            </span>
+          </Link>
+        </div>
+
+        {/* The Auth Card */}
+        <GlassPanel className="border-t-white/20">
+          {children}
+        </GlassPanel>
+
+        {/* Footer Links */}
+        <div className="mt-6 text-center text-sm text-muted-foreground">
+          <Link href="/" className="hover:text-primary transition-colors">
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+

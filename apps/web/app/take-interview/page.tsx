@@ -10,9 +10,9 @@ import { Progress } from "@/components/ui/progress"
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ArrowLeft, Clock, Download, Smile, Meh, Frown, Gauge, CircleDashed } from "lucide-react"
-import { useToast } from "@/components/ui/use-toast"
+import { useToast } from '@/hooks/use-toast'
 import { io, type Socket } from "socket.io-client"
-import { ChatWindow } from "@/components/interview/ChatWindow"
+import { ChatWindow } from "@/components/features/interview/ChatWindow"
 
 // --- HELPER COMPONENTS (NO CHANGES NEEDED) ---
 const InterviewHeader = ({ timer, onEndInterview }: { timer: number, onEndInterview: () => void }) => {
@@ -180,3 +180,4 @@ export default function TakeInterviewPage() {
         </div>
     );
 }
+

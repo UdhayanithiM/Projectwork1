@@ -2,7 +2,7 @@
 
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import SignupPage from '@/app/signup/page'
+import SignupPage from '@/app/(auth)/signup/page'
 
 // Since the signup page uses the router, we need to mock it.
 jest.mock('next/navigation', () => ({
@@ -58,3 +58,4 @@ describe('Signup Page', () => {
     // In a more advanced setup, we would mock the `fetch` call to verify API interaction.
   });
 });
+

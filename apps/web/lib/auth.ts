@@ -1,10 +1,14 @@
+import 'server-only'; // 🚨 Critical: Prevents client-side imports of secrets
 import { jwtVerify, SignJWT } from 'jose';
+import { cookies } from 'next/headers';
 
-// This is the secret key for signing the JWT. It MUST be in your .env file
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET is not defined in environment variables');
+// Use a fallback for development, but strict check in production
+const JWT_SECRET = process.env.JWT_SECRET || 'default-dev-secret-do-not-use-in-prod';
+
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('JWT_SECRET is not defined in environment variables');
 }
+
 const secretKey = new TextEncoder().encode(JWT_SECRET);
 
 export interface UserJwtPayload {
@@ -12,37 +16,54 @@ export interface UserJwtPayload {
   email: string;
   role: string;
   name: string;
-  jti: string; // jti is a standard claim for JWT ID
-  iat: number; // iat is a standard claim for issued at time
+  jti?: string; // Standard JWT ID claim (optional in input)
+  iat?: number; // Issued At claim
+  exp?: number; // Expiration claim
 }
 
 /**
  * Creates and signs a new JWT for a user.
  * Typically used in the login API route.
  */
-export async function signJwt(payload: { id: string, email: string, role: string, name: string }) {
-    const iat = Math.floor(Date.now() / 1000);
-    const exp = iat + 60 * 60 * 24 * 7; // 7 days expiration
+export async function signJwt(payload: { id: string; email: string; role: string; name: string }) {
+  const iat = Math.floor(Date.now() / 1000);
+  const exp = iat + 60 * 60 * 24 * 7; // 7 days expiration
 
-    return new SignJWT({ ...payload })
-        .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
-        .setExpirationTime(exp)
-        .setIssuedAt(iat)
-        .setNotBefore(iat)
-        .sign(secretKey);
+  return new SignJWT({ ...payload })
+    .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
+    .setExpirationTime(exp)
+    .setIssuedAt(iat)
+    .setNotBefore(iat)
+    .sign(secretKey);
 }
 
 /**
  * Verifies a JWT and returns its payload if valid.
- * This is safe to use in any server-side context (API Routes, custom server, etc.).
+ * This is safe to use in any server-side context (API Routes, Middleware, etc.).
  */
 export async function verifyJwt(token: string): Promise<UserJwtPayload | null> {
-    try {
-        const { payload } = await jwtVerify<UserJwtPayload>(token, secretKey);
-        return payload;
-    } catch (error) {
-        // Log the error for debugging, but don't expose details to the client
-        console.error('JWT Verification Error:', error);
-        return null;
-    }
+  try {
+    const { payload } = await jwtVerify(token, secretKey);
+    return payload as unknown as UserJwtPayload;
+  } catch (error) {
+    // Token is invalid or expired
+    return null;
+  }
 }
+
+/**
+ * Retrieves the current user's session from the cookies.
+ * Usage: In Server Components, call `const session = await getSession();`
+ * to instantly get the logged-in user without an API call.
+ */
+export async function getSession() {
+  const cookieStore = cookies();
+  const token = cookieStore.get('token')?.value;
+
+  if (!token) return null;
+
+  return verifyJwt(token);
+}
+
+
+

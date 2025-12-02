@@ -1,0 +1,79 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { 
+  LayoutGrid, 
+  Video, 
+  FileCode, 
+  Award, 
+  Settings, 
+  LogOut, 
+  Gauge,
+  User
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/stores/authStore";
+
+const sidebarItems = [
+  { icon: LayoutGrid, label: "Dashboard", href: "/dashboard" },
+  { icon: Video, label: "Interviews", href: "/dashboard/interviews" },
+  { icon: FileCode, label: "Assessments", href: "/technical-assessment" }, // Adjusted link
+  { icon: Award, label: "Achievements", href: "/dashboard/achievements" },
+  { icon: Settings, label: "Settings", href: "/dashboard/settings" },
+];
+
+export function DashboardSidebar() {
+  const pathname = usePathname();
+  const logout = useAuthStore((state) => state.logout);
+
+  return (
+    <aside className="hidden md:flex w-64 flex-col fixed inset-y-0 z-50 border-r border-white/5 bg-sidebar/50 backdrop-blur-xl">
+      {/* Sidebar Header */}
+      <div className="h-16 flex items-center px-6 border-b border-white/5">
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <Gauge className="h-6 w-6 text-primary" />
+          <span className="font-bold text-lg tracking-tight">
+            <span className="text-primary">Forti</span>Twin
+          </span>
+        </Link>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex-1 py-6 px-3 flex flex-col gap-1 overflow-y-auto">
+        {sidebarItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
+                isActive 
+                  ? "bg-primary/10 text-primary shadow-[0_0_15px_-3px_rgba(124,58,237,0.3)]" 
+                  : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+              )}
+            >
+              <item.icon className={cn("h-4 w-4 transition-colors", isActive ? "text-primary" : "group-hover:text-primary")} />
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* Footer / User Profile */}
+      <div className="p-4 border-t border-white/5">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          onClick={() => logout()}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Log Out
+        </Button>
+      </div>
+    </aside>
+  );
+}
+
