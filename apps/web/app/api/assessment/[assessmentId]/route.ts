@@ -1,61 +1,68 @@
-// apps/web/app/api/assessment/[assessmentId]/route.ts
-
-import { NextResponse } from "next/server"; // <--- UNCOMMENT THIS LINE
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyJwt } from "@/lib/auth";
+import { jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-/**
- * API Route to securely fetch the full details for a specific assessment,
- * including all of its assigned coding questions, for the logged-in candidate.
- */
+const JWT_SECRET = process.env.JWT_SECRET || "default-dev-secret-please-change";
+const secretKey = new TextEncoder().encode(JWT_SECRET);
+
 export async function GET(
   request: Request,
   { params }: { params: { assessmentId: string } }
 ) {
-  // 1. Get the user's token from the cookies
-  const token = cookies().get("token");
-  const payload = token ? await verifyJwt(token.value) : null;
+  // 1. Auth Check
+  const token = cookies().get("token")?.value;
+  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // 2. If no valid token, the user is not authenticated
-  if (!payload) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  let userId: string;
+  try {
+      const { payload } = await jwtVerify(token, secretKey);
+      userId = payload.id as string;
+  } catch (err) {
+      return NextResponse.json({ error: "Invalid Token" }, { status: 403 });
   }
 
   try {
     const { assessmentId } = params;
 
-    // 3. Fetch the assessment from the database
+    // 3. Fetch Assessment
+    // We strictly filter by `candidateId: userId` to prevent IDOR attacks.
     const assessment = await prisma.assessment.findUnique({
       where: {
         id: assessmentId,
-        // 4. CRITICAL SECURITY CHECK:
-        // Ensure the person fetching this assessment is the assigned candidate.
-        candidateId: payload.id,
+        candidateId: userId, 
       },
       include: {
         technicalAssessment: {
           include: {
-            // Include the full details of all assigned questions
-            questions: true,
+            // Fetch the actual coding questions linked to this session
+            questions: {
+                select: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    difficulty: true,
+                    testCases: true // Frontend needs this for local validation
+                }
+            },
           },
         },
       },
     });
 
-    // 5. If no assessment matches BOTH the ID and the candidate, return not found.
     if (!assessment) {
       return NextResponse.json(
-        { error: "Assessment not found or you do not have permission to view it." },
+        { error: "Assessment not found or permission denied." },
         { status: 404 }
       );
     }
 
     return NextResponse.json(assessment, { status: 200 });
+
   } catch (error) {
-    console.error("GET /api/assessment/[assessmentId] error:", error);
+    console.error("GET /api/assessment/[id] Error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch assessment details" },
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }

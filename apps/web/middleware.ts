@@ -28,32 +28,47 @@ export async function middleware(request: NextRequest) {
   if (isAuthPage && token) {
     try {
       await jwtVerify(token, secretKey);
+      // Valid token found on auth page -> redirect to dashboard
       return NextResponse.redirect(new URL('/dashboard', request.url));
     } catch (error) {
-      // If token is invalid, just let them stay on login page
+      // If token is invalid, let them stay on login page to re-auth
+      // Optionally clear the bad cookie here
+      const response = NextResponse.next();
+      response.cookies.delete('token');
+      return response;
     }
   }
 
   // 3. Protect Private Routes
   if (isProtectedRoute) {
+    // Case A: No Token
     if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      // Redirect to login, but save the original URL to redirect back after login
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(loginUrl);
     }
 
+    // Case B: Verify Token & Check Role
     try {
       const { payload } = await jwtVerify(token, secretKey);
       const role = (payload.role as string)?.toUpperCase();
 
       // Role-Based Access Control (RBAC)
+      
+      // Admin Routes: Only ADMIN
       if (isAdminRoute && role !== 'ADMIN') {
         return NextResponse.redirect(new URL('/dashboard', request.url));
       }
       
+      // HR Routes: HR or ADMIN
       if (isHrRoute && role !== 'HR' && role !== 'ADMIN') {
         return NextResponse.redirect(new URL('/dashboard', request.url));
       }
 
+      // If all checks pass, allow access
       return NextResponse.next();
+
     } catch (error) {
       // Token expired or invalid -> Redirect to login & clear cookie
       const response = NextResponse.redirect(new URL('/login', request.url));
@@ -62,6 +77,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Default: Allow request
   return NextResponse.next();
 }
 

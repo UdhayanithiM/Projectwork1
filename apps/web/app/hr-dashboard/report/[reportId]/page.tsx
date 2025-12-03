@@ -1,29 +1,23 @@
-// in app/hr-dashboard/report/[reportId]/page.tsx
-
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/components/ui/use-toast';
-import { LoaderCircle, ArrowLeft, User, Calendar, FileText, CheckCircle, BrainCircuit, BarChart3, Star, Zap } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2, ArrowLeft, User, Calendar, FileText, CheckCircle, BrainCircuit, Star, Zap } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { GlassPanel } from '@/components/ui/glass-panel';
 import { Separator } from '@/components/ui/separator';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-// Define the shape of our report data
+// --- Types ---
 type ReportData = {
   id: string;
   summary: string | null;
   technicalScore: number | null;
   strengths: string[];
   areasForImprovement: string[];
-  behavioralScores: {
-    communication: number;
-    problemSolving: number;
-    leadership: number;
-  };
+  behavioralScores: { [key: string]: number }; // Flexible JSON
   candidate: {
     name: string;
     email: string;
@@ -48,16 +42,17 @@ export default function ReportPage() {
     const fetchReport = async () => {
       try {
         setIsLoading(true);
+        // Note: You need to implement GET /api/hr/report/[reportId] if not exists
+        // (Assuming you will copy the pattern from previous routes)
         const res = await fetch(`/api/hr/report/${reportId}`);
         if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || 'Failed to fetch report.');
+          throw new Error('Failed to fetch report.');
         }
         setReport(await res.json());
-      } catch (err) {
+      } catch (err: any) {
         toast({
           title: 'Error',
-          description: err instanceof Error ? err.message : 'Could not load the report.',
+          description: err.message,
           variant: 'destructive',
         });
       } finally {
@@ -69,99 +64,144 @@ export default function ReportPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+      <div className="flex h-screen items-center justify-center bg-black">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
   if (!report) {
     return (
-      <div className="flex h-screen items-center justify-center text-center">
+      <div className="flex h-screen items-center justify-center text-center bg-black text-white">
         <div>
-            <h2 className="text-xl font-bold text-destructive">Report Not Found</h2>
-            <p className="text-muted-foreground">The report you are looking for does not exist.</p>
-            <Button onClick={() => router.push('/hr-dashboard')} className="mt-4">Back to Dashboard</Button>
+            <h2 className="text-xl font-bold text-red-500">Report Not Found</h2>
+            <p className="text-muted-foreground mt-2">The analysis data is unavailable.</p>
+            <Button variant="outline" onClick={() => router.push('/hr-dashboard')} className="mt-6 border-white/10 text-white hover:bg-white/10">
+                Return to Command Center
+            </Button>
         </div>
       </div>
     );
   }
 
-  const chartData = report.behavioralScores ? Object.entries(report.behavioralScores).map(([name, score]) => ({ name, score })) : [];
+  // Transform scores for chart
+  const chartData = report.behavioralScores 
+    ? Object.entries(report.behavioralScores).map(([name, score]) => ({ 
+        name: name.replace(/_/g, ' '), // Clean up keys if needed
+        score 
+      })) 
+    : [];
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-8">
-      <Button variant="ghost" onClick={() => router.push('/hr-dashboard')} className="mb-6">
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Dashboard
-      </Button>
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-primary/30 p-6 md:p-10">
+      
+      <div className="max-w-5xl mx-auto space-y-8">
+        
+        {/* Navigation */}
+        <Button variant="ghost" onClick={() => router.push('/hr-dashboard')} className="text-muted-foreground hover:text-white hover:bg-white/5 pl-0">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+        </Button>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-3xl">Interview Report</CardTitle>
-          <CardDescription>
-            AI-generated analysis for the assessment completed on {new Date(report.assessment.createdAt).toLocaleDateString()}.
-          </CardDescription>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 pt-4 text-sm text-muted-foreground">
-              <div className="flex items-center"><User className="mr-2 h-4 w-4" /><span>{report.candidate.name}</span></div>
-              <div className="flex items-center"><Calendar className="mr-2 h-4 w-4" /><span>{report.candidate.email}</span></div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-8">
-            <Separator />
+        {/* Header Card */}
+        <GlassPanel className="p-8 border-white/10 bg-white/[0.02]">
+            <div className="flex flex-col md:flex-row justify-between md:items-start gap-6">
+                <div>
+                    <div className="flex items-center gap-3 mb-2">
+                        <Badge variant="outline" className="text-primary border-primary/30 bg-primary/10 uppercase tracking-widest font-bold text-[10px]">
+                            Confidential Report
+                        </Badge>
+                        <span className="text-xs text-muted-foreground font-mono">ID: {report.id.slice(0, 8)}</span>
+                    </div>
+                    <h1 className="text-3xl md:text-4xl font-heading font-bold text-white">Candidate Evaluation</h1>
+                    <div className="flex flex-wrap gap-6 mt-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2"><User className="h-4 w-4 text-white/50" /><span className="text-white">{report.candidate.name}</span></div>
+                        <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-white/50" /><span>{new Date(report.assessment.createdAt).toLocaleDateString()}</span></div>
+                    </div>
+                </div>
+                
+                {/* Overall Score Badge */}
+                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-white/5 border border-white/10 min-w-[120px]">
+                    <span className="text-xs font-bold uppercase text-muted-foreground tracking-wider mb-1">Tech Score</span>
+                    <span className="text-4xl font-bold font-mono text-primary">{report.technicalScore?.toFixed(0) ?? 0}%</span>
+                </div>
+            </div>
+        </GlassPanel>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
-            {/* AI Summary */}
-            <section>
-                <h2 className="text-xl font-semibold flex items-center mb-4"><FileText className="mr-3 h-5 w-5 text-primary"/>AI Summary</h2>
-                <p className="text-muted-foreground">{report.summary || "No summary available."}</p>
-            </section>
+            {/* LEFT COLUMN: Summary & Behavioral */}
+            <div className="lg:col-span-2 space-y-8">
+                
+                {/* AI Summary */}
+                <section>
+                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-purple-400" /> Executive Summary
+                    </h3>
+                    <GlassPanel className="p-6 bg-purple-500/5 border-purple-500/20 text-purple-100/90 leading-relaxed text-sm md:text-base">
+                        {report.summary || "No summary generated."}
+                    </GlassPanel>
+                </section>
 
-            {/* Scores Overview */}
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                    <CardHeader><CardTitle className="flex items-center text-lg"><Zap className="mr-2 h-4 w-4"/>Technical Score</CardTitle></CardHeader>
-                    <CardContent>
-                        <p className="text-5xl font-bold">{report.technicalScore?.toFixed(1) ?? 'N/A'}<span className="text-2xl text-muted-foreground">%</span></p>
-                        <p className="text-xs text-muted-foreground mt-2">Based on automated coding challenge results.</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader><CardTitle className="flex items-center text-lg"><BrainCircuit className="mr-2 h-4 w-4"/>Behavioral Analysis</CardTitle></CardHeader>
-                    <CardContent>
-                        <ResponsiveContainer width="100%" height={150}>
-                            <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis type="number" domain={[0, 100]} />
-                                <YAxis type="category" dataKey="name" width={100} />
-                                <Tooltip />
-                                <Bar dataKey="score" fill="#8884d8" background={{ fill: '#eee' }} />
+                {/* Behavioral Chart */}
+                <section>
+                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <BrainCircuit className="h-5 w-5 text-blue-400" /> Soft Skills Analysis
+                    </h3>
+                    <GlassPanel className="p-6 bg-black/40 border-white/10 h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                                <XAxis type="number" domain={[0, 100]} hide />
+                                <YAxis type="category" dataKey="name" width={120} tick={{fill: '#a1a1aa', fontSize: 12}} />
+                                <Tooltip 
+                                    contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', color: '#fff' }}
+                                    itemStyle={{ color: '#fff' }}
+                                    cursor={{fill: 'rgba(255,255,255,0.05)'}}
+                                />
+                                <Bar dataKey="score" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} />
                             </BarChart>
                         </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-            </section>
-            
-            {/* Strengths & Improvements */}
-            <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                    <CardHeader><CardTitle className="flex items-center text-lg"><CheckCircle className="mr-2 h-4 w-4 text-green-500"/>Key Strengths</CardTitle></CardHeader>
-                    <CardContent>
-                        <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                            {report.strengths?.map((strength, i) => <li key={i}>{strength}</li>)}
+                    </GlassPanel>
+                </section>
+            </div>
+
+            {/* RIGHT COLUMN: Strengths/Weaknesses */}
+            <div className="space-y-8">
+                
+                <section>
+                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-400" /> Key Strengths
+                    </h3>
+                    <GlassPanel className="p-5 bg-green-500/5 border-green-500/10">
+                        <ul className="space-y-3">
+                            {report.strengths?.length > 0 ? report.strengths.map((item, i) => (
+                                <li key={i} className="flex gap-3 text-sm text-green-100/80">
+                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-green-500 shrink-0" />
+                                    {item}
+                                </li>
+                            )) : <li className="text-sm text-muted-foreground">None identified.</li>}
                         </ul>
-                    </CardContent>
-                </Card>
-                 <Card>
-                    <CardHeader><CardTitle className="flex items-center text-lg"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Areas for Improvement</CardTitle></CardHeader>
-                    <CardContent>
-                        <ul className="list-disc pl-5 space-y-2 text-muted-foreground">
-                            {report.areasForImprovement?.map((area, i) => <li key={i}>{area}</li>)}
+                    </GlassPanel>
+                </section>
+
+                <section>
+                    <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <Zap className="h-5 w-5 text-yellow-400" /> Areas to Improve
+                    </h3>
+                    <GlassPanel className="p-5 bg-yellow-500/5 border-yellow-500/10">
+                        <ul className="space-y-3">
+                            {report.areasForImprovement?.length > 0 ? report.areasForImprovement.map((item, i) => (
+                                <li key={i} className="flex gap-3 text-sm text-yellow-100/80">
+                                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-yellow-500 shrink-0" />
+                                    {item}
+                                </li>
+                            )) : <li className="text-sm text-muted-foreground">None identified.</li>}
                         </ul>
-                    </CardContent>
-                </Card>
-            </section>
-        </CardContent>
-      </Card>
+                    </GlassPanel>
+                </section>
+
+            </div>
+        </div>
+      </div>
     </div>
   );
 }

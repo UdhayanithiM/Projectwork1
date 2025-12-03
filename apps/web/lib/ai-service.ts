@@ -7,6 +7,7 @@ export class AIService {
   static async startSession(data: {
     session_id: string;
     candidate_id: string;
+    candidate_name?: string;
     job_title: string;
     company: string;
     personality?: string;

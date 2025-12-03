@@ -1,8 +1,5 @@
-// in app/hr-dashboard/page.tsx
+"use client";
 
-'use client';
-
-// --- THIS IS THE CORRECTED IMPORT STATEMENT ---
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,15 +9,17 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Users, Search, FilePlus2, LoaderCircle, CheckCircle, Clock, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Users, Search, FilePlus2, Loader2, CheckCircle, Clock, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useAuthStore } from '@/stores/authStore';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { GlassPanel } from '@/components/ui/glass-panel';
 import Link from 'next/link';
 
+// Types match API response
 type CandidateWithAssessment = {
   id: string;
   name: string;
@@ -46,12 +45,15 @@ type CodingQuestion = {
 
 const StatusBadge = ({ status }: { status: string | undefined }) => {
     if (status === 'COMPLETED') {
-        return <Badge variant="default" className="bg-green-500 hover:bg-green-600"><CheckCircle className="mr-1 h-3 w-3" /> Completed</Badge>;
+        return <Badge variant="default" className="bg-green-500/20 text-green-500 hover:bg-green-500/30 border-green-500/50"><CheckCircle className="mr-1 h-3 w-3" /> Completed</Badge>;
+    }
+    if (status === 'IN_PROGRESS') {
+        return <Badge variant="secondary" className="bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border-blue-500/50"><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Active</Badge>;
     }
     if (status === 'PENDING') {
-        return <Badge variant="secondary"><Clock className="mr-1 h-3 w-3" /> Pending</Badge>;
+        return <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500/30 border-yellow-500/50"><Clock className="mr-1 h-3 w-3" /> Pending</Badge>;
     }
-    return <Badge variant="outline">Not Assigned</Badge>;
+    return <Badge variant="outline" className="text-muted-foreground border-white/10">Not Assigned</Badge>;
 };
 
 export default function HrDashboardUpgraded() {
@@ -95,7 +97,7 @@ export default function HrDashboardUpgraded() {
 
   useEffect(() => {
     if (isAuthLoading) return;
-    if (!user || (user.role.toUpperCase() !== 'HR' && user.role.toUpperCase() !== 'ADMIN')) {
+    if (!user || (user.role !== 'HR' && user.role !== 'ADMIN')) {
         router.push('/login');
         return;
     }
@@ -163,80 +165,99 @@ export default function HrDashboardUpgraded() {
 
   if (isAuthLoading) {
     return (
-        <div className="flex min-h-screen w-full items-center justify-center">
-            <LoaderCircle className="h-10 w-10 animate-spin text-primary" />
+        <div className="flex min-h-screen w-full items-center justify-center bg-black">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
     );
   }
   
   return (
     <>
-      <div className="flex min-h-screen bg-background">
-        <aside className="hidden md:flex w-72 flex-col border-r bg-card fixed inset-y-0">
-          <div className="p-5 border-b">
-            <h2 className="font-extrabold text-2xl">
+      <div className="flex min-h-screen bg-black text-white font-sans selection:bg-primary/30">
+        
+        {/* Sidebar Navigation */}
+        <aside className="hidden md:flex w-72 flex-col border-r border-white/10 bg-[#0a0a0b] fixed inset-y-0 z-50">
+          <div className="p-6 border-b border-white/10">
+            <h2 className="font-heading font-extrabold text-2xl tracking-tight">
               <span className="text-primary">Forti</span>Twin
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">HR Dashboard</p>
+            <p className="text-xs text-muted-foreground mt-1 uppercase tracking-widest font-bold">HR Command Center</p>
           </div>
           <nav className="p-4 space-y-2 flex-1">
-            <Button variant={'secondary'} className="w-full justify-start">
+            <Button variant={'secondary'} className="w-full justify-start bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20">
               <Users className="mr-2 h-4 w-4" />
               Candidates
             </Button>
           </nav>
+          <div className="p-4 border-t border-white/10">
+             <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">HR</div>
+                <div className="text-xs text-muted-foreground">
+                    <p className="font-bold text-white">{user?.name}</p>
+                    <p>{user?.email}</p>
+                </div>
+             </div>
+          </div>
         </aside>
-        <main className="flex-1 md:ml-72">
-          <div className="p-6 md:pt-8 md:px-8 max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row md:items-center mb-6 md:mb-8 justify-between gap-4">
+
+        {/* Main Content */}
+        <main className="flex-1 md:ml-72 bg-black/50">
+          <div className="p-6 md:pt-10 md:px-10 max-w-7xl mx-auto space-y-8">
+            
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold">Candidate Management</h1>
-                    <p className="text-muted-foreground mt-1">
-                        View, track, and manage all candidates in your pipeline.
+                    <h1 className="text-3xl md:text-4xl font-heading font-bold text-white">Candidate Pipeline</h1>
+                    <p className="text-muted-foreground mt-2 text-lg">
+                        Manage recruitment, assign technical challenges, and review AI reports.
                     </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                     <ModeToggle />
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button><FilePlus2 className="mr-2 h-4 w-4" />Create Assessment</Button>
+                            <Button className="shadow-glow-primary bg-primary hover:bg-primary/90 text-white font-bold">
+                                <FilePlus2 className="mr-2 h-4 w-4" /> Assign New Task
+                            </Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-[425px]">
+                        <DialogContent className="sm:max-w-[500px] bg-[#0a0a0b] border-white/10 text-white">
                             <DialogHeader>
-                                <DialogTitle>Create New Assessment</DialogTitle>
-                                <DialogDescription>Assign a technical assessment to a candidate who has not been assessed yet.</DialogDescription>
+                                <DialogTitle>Create Assessment</DialogTitle>
+                                <DialogDescription className="text-muted-foreground">Assign technical questions to a waiting candidate.</DialogDescription>
                             </DialogHeader>
-                            <div className="grid gap-4 py-4">
+                            <div className="grid gap-6 py-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="candidate">Candidate</Label>
+                                    <Label htmlFor="candidate" className="text-xs uppercase font-bold text-muted-foreground">Select Candidate</Label>
                                     <Select value={selectedCandidate} onValueChange={setSelectedCandidate}>
-                                        <SelectTrigger><SelectValue placeholder="Select a candidate..." /></SelectTrigger>
-                                        <SelectContent>
-                                            {assignableCandidates.map(c => <SelectItem key={c.id} value={c.id}>{c.name} ({c.email})</SelectItem>)}
+                                        <SelectTrigger className="bg-white/5 border-white/10 text-white"><SelectValue placeholder="Choose a candidate..." /></SelectTrigger>
+                                        <SelectContent className="bg-[#0a0a0b] border-white/10 text-white">
+                                            {assignableCandidates.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                                         </SelectContent>
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Coding Questions</Label>
-                                    <div className="max-h-48 overflow-y-auto space-y-2 rounded-md border p-2">
-                                        {questions.map(q => (
-                                            <div key={q.id} className={`flex items-center justify-between p-2 rounded-md cursor-pointer ${selectedQuestions.includes(q.id) ? 'bg-primary/10' : ''}`}
-                                                onClick={() => {
-                                                    setSelectedQuestions(prev => 
-                                                        prev.includes(q.id) ? prev.filter(id => id !== q.id) : [...prev, q.id]
-                                                    );
-                                                }}
-                                            >
-                                                <span>{q.title}</span>
-                                                <Badge variant="secondary">{q.difficulty}</Badge>
-                                            </div>
-                                        ))}
+                                    <Label className="text-xs uppercase font-bold text-muted-foreground">Select Questions (Multi-select)</Label>
+                                    <div className="max-h-60 overflow-y-auto space-y-2 rounded-md border border-white/10 bg-black/40 p-2 custom-scrollbar">
+                                            {questions.map(q => (
+                                                <div 
+                                                    key={q.id} 
+                                                    className={`flex items-center justify-between p-3 rounded-md cursor-pointer transition-colors border ${selectedQuestions.includes(q.id) ? 'bg-primary/20 border-primary/50 text-white' : 'border-transparent hover:bg-white/5 text-muted-foreground hover:text-white'}`}
+                                                    onClick={() => {
+                                                        setSelectedQuestions(prev => 
+                                                            prev.includes(q.id) ? prev.filter(id => id !== q.id) : [...prev, q.id]
+                                                        );
+                                                    }}
+                                                >
+                                                    <span className="font-medium text-sm">{q.title}</span>
+                                                    <Badge variant="outline" className="text-[10px] uppercase border-white/10">{q.difficulty}</Badge>
+                                                </div>
+                                            ))}
                                     </div>
                                 </div>
                             </div>
                             <DialogFooter>
-                                <Button onClick={handleCreateAssessment} disabled={isSubmitting || !selectedCandidate || selectedQuestions.length === 0}>
-                                    {isSubmitting ? "Assigning..." : "Assign Assessment"}
+                                <Button onClick={handleCreateAssessment} disabled={isSubmitting || !selectedCandidate || selectedQuestions.length === 0} className="w-full">
+                                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : "Confirm Assignment"}
                                 </Button>
                             </DialogFooter>
                         </DialogContent>
@@ -244,109 +265,112 @@ export default function HrDashboardUpgraded() {
                 </div>
             </div>
             
-            <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                      <div>
-                          <CardTitle>All Candidates</CardTitle>
-                          <CardDescription>A list of all registered candidates and their assessment status.</CardDescription>
-                      </div>
-                      <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                              placeholder="Search by name or email..."
-                              className="pl-10 w-64"
-                              value={query}
-                              onChange={(e) => setQuery(e.target.value)}
-                          />
-                      </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Email</TableHead>
-                                    <TableHead>Assessment Status</TableHead>
-                                    <TableHead>Score</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isDataLoading ? (
-                                    <TableRow><TableCell colSpan={5} className="text-center p-10"><LoaderCircle className="h-6 w-6 animate-spin mx-auto" /></TableCell></TableRow>
-                                ) : error ? (
-                                    <TableRow><TableCell colSpan={5} className="text-center p-10 text-destructive">{error}</TableCell></TableRow>
-                                ) : filteredCandidates.length === 0 ? (
-                                    <TableRow><TableCell colSpan={5} className="text-center p-10 text-muted-foreground">No candidates found.</TableCell></TableRow>
-                                ) : (
-                                    filteredCandidates.map((candidate) => {
-                                        const latestAssessment = candidate.takenAssessments[0];
-                                        const status = latestAssessment?.status;
-                                        const score = latestAssessment?.technicalAssessment?.score;
-                                        const reportId = latestAssessment?.report?.id;
-
-                                        return (
-                                            <TableRow key={candidate.id}>
-                                                <TableCell className="font-medium">{candidate.name}</TableCell>
-                                                <TableCell>{candidate.email}</TableCell>
-                                                <TableCell><StatusBadge status={status} /></TableCell>
-                                                <TableCell>{typeof score === 'number' ? (<span className="font-semibold">{score.toFixed(1)}%</span>) : (<span className="text-muted-foreground">-</span>)}</TableCell>
-                                                <TableCell className="text-right">
-                                                    {!latestAssessment ? (
-                                                        <Button variant="outline" size="sm" onClick={() => { setSelectedCandidate(candidate.id); setIsDialogOpen(true); }}>
-                                                            <FilePlus2 className="mr-2 h-4 w-4" />Assign
-                                                        </Button>
-                                                    ) : (
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end">
-                                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                                <DropdownMenuSeparator />
-                                                                {status === 'COMPLETED' && reportId && (
-                                                                    <DropdownMenuItem asChild>
-                                                                        <Link href={`/hr-dashboard/report/${reportId}`}><Eye className="mr-2 h-4 w-4" />View Report</Link>
-                                                                    </DropdownMenuItem>
-                                                                )}
-                                                                <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(latestAssessment.id)}>
-                                                                    <Trash2 className="mr-2 h-4 w-4" />Delete Assessment
-                                                                </DropdownMenuItem>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    )}
-                                                </TableCell>
-                                            </TableRow>
-                                        );
-                                    })
-                                )}
-                            </TableBody>
-                        </Table>
+            {/* Table Card */}
+            <GlassPanel className="p-0 overflow-hidden border-white/10 bg-black/40">
+                <div className="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
+                    <div className="relative w-full max-w-sm">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Filter candidates..."
+                            className="pl-10 bg-black/50 border-white/10 text-white placeholder:text-muted-foreground/50 focus-visible:ring-primary/50"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                        />
                     </div>
-                </CardContent>
-            </Card>
+                    <div className="text-xs text-muted-foreground font-mono">
+                        {filteredCandidates.length} Records Found
+                    </div>
+                </div>
+
+                <Table>
+                    <TableHeader className="bg-transparent">
+                        <TableRow className="border-white/5 hover:bg-transparent">
+                            <TableHead className="text-muted-foreground">Name</TableHead>
+                            <TableHead className="text-muted-foreground">Email</TableHead>
+                            <TableHead className="text-muted-foreground">Status</TableHead>
+                            <TableHead className="text-muted-foreground">Score</TableHead>
+                            <TableHead className="text-right text-muted-foreground">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {isDataLoading ? (
+                            <TableRow><TableCell colSpan={5} className="h-32 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell></TableRow>
+                        ) : filteredCandidates.length === 0 ? (
+                            <TableRow><TableCell colSpan={5} className="h-32 text-center text-muted-foreground">No candidates match your search.</TableCell></TableRow>
+                        ) : (
+                            filteredCandidates.map((candidate) => {
+                                const latestAssessment = candidate.takenAssessments[0];
+                                const status = latestAssessment?.status;
+                                const score = latestAssessment?.technicalAssessment?.score;
+                                const reportId = latestAssessment?.report?.id;
+
+                                return (
+                                    <TableRow key={candidate.id} className="border-white/5 hover:bg-white/5 transition-colors group">
+                                        <TableCell className="font-medium text-white group-hover:text-primary transition-colors">{candidate.name}</TableCell>
+                                        <TableCell className="text-muted-foreground">{candidate.email}</TableCell>
+                                        <TableCell><StatusBadge status={status} /></TableCell>
+                                        <TableCell>
+                                            {typeof score === 'number' ? (
+                                                <span className={`font-mono font-bold ${score >= 70 ? 'text-green-400' : 'text-red-400'}`}>{score.toFixed(0)}%</span>
+                                            ) : (
+                                                <span className="text-muted-foreground/30">-</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            {latestAssessment ? (
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="bg-[#0a0a0b] border-white/10 text-white">
+                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                        <DropdownMenuSeparator className="bg-white/10"/>
+                                                        {status === 'COMPLETED' && reportId && (
+                                                            <DropdownMenuItem asChild className="cursor-pointer focus:bg-white/10">
+                                                                <Link href={`/hr-dashboard/report/${reportId}`}><Eye className="mr-2 h-4 w-4" />View Report</Link>
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                        <DropdownMenuItem className="text-red-400 focus:bg-red-500/10 focus:text-red-400 cursor-pointer" onClick={() => handleDeleteClick(latestAssessment.id)}>
+                                                            <Trash2 className="mr-2 h-4 w-4" />Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            ) : (
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="border-primary/30 text-primary hover:bg-primary/10 h-8 text-xs"
+                                                    onClick={() => { setSelectedCandidate(candidate.id); setIsDialogOpen(true); }}
+                                                >
+                                                    Assign
+                                                </Button>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
+                        )}
+                    </TableBody>
+                </Table>
+            </GlassPanel>
           </div>
         </main>
       </div>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-[#0a0a0b] border-white/10 text-white">
             <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the assessment and all of its data, including any reports.
+                <AlertDialogTitle className="text-red-500">Delete Assessment?</AlertDialogTitle>
+                <AlertDialogDescription className="text-muted-foreground">
+                    This action is irreversible. It will wipe all progress, scores, and reports associated with this assessment.
                 </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                <AlertDialogCancel className="border-white/10 hover:bg-white/5 hover:text-white">Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700 text-white">Permanently Delete</AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
   );
 }
-

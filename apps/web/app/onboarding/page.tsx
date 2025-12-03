@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -10,16 +10,19 @@ import {
   ArrowRight, 
   Cpu, 
   ShieldCheck,
-  ScanLine
+  ScanLine,
+  AlertCircle
 } from "lucide-react";
 import { useDropzone } from "react-dropzone"; 
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/authStore"; 
 
-// Mock "Scanning" Logs
+// Visual logs for the scanning effect
 const scanSteps = [
   "Initializing file stream...",
   "Parsing PDF structure...",
@@ -32,54 +35,88 @@ const scanSteps = [
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [status, setStatus] = useState<"idle" | "uploading" | "scanning" | "complete">("idle");
+  const { checkAuthStatus } = useAuthStore(); 
+  
+  const [status, setStatus] = useState<"idle" | "uploading" | "scanning" | "complete" | "error">("idle");
   const [progress, setProgress] = useState(0);
   const [logs, setLogs] = useState<string[]>([]);
   const [fileName, setFileName] = useState("");
+  
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Simulate the "AI Scanning" process
-  const startScanning = useCallback(() => {
-    setStatus("scanning");
+  const handleUpload = async (file: File) => {
+    setStatus("uploading");
+    setFileName(file.name);
     setProgress(0);
     setLogs([]);
 
+    // 1. Visual Effect: Start the "Hacker" logs
     let stepIndex = 0;
-    const interval = setInterval(() => {
-      if (stepIndex >= scanSteps.length) {
-        clearInterval(interval);
-        setStatus("complete");
-        setProgress(100);
-        return;
+    intervalRef.current = setInterval(() => {
+      if (stepIndex < scanSteps.length - 1) {
+        setLogs((prev) => {
+          const newLogs = [...prev, scanSteps[stepIndex]];
+          return newLogs.slice(-4); 
+        });
+        // Increment progress visually up to 90%
+        setProgress((prev) => Math.min(prev + 12, 90));
+        stepIndex++;
+      }
+    }, 600);
+
+    try {
+      // 2. Real API Upload
+      const formData = new FormData();
+      formData.append("file", file); 
+
+      const res = await fetch("/api/onboarding", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Upload failed");
       }
 
-      setLogs((prev) => {
-        const newLogs = [...prev, scanSteps[stepIndex]];
-        // Keep only last 4 logs to prevent overflow/jumping
-        return newLogs.slice(-4); 
-      });
-      setProgress(((stepIndex + 1) / scanSteps.length) * 100);
-      stepIndex++;
-    }, 800); // Speed of "Scanning"
-  }, []);
+      // 3. ✅ FORCE SYNC: Update the global user state immediately
+      await checkAuthStatus();
+
+      // 4. Finish Animation
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setLogs((prev) => [...prev, "Analysis Successful. Access Granted."]);
+      setProgress(100);
+      setStatus("complete");
+      toast.success("Profile Calibrated");
+
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setStatus("error");
+      toast.error("Analysis Failed", { description: error.message });
+    }
+  };
+
+  const handleEnterMissionControl = async () => {
+    // 5. ✅ NUCLEAR OPTION: Hard Navigation
+    // We use window.location.href instead of router.push.
+    // This forces a browser refresh, ensuring the Dashboard 
+    // fetches fresh data from the server, guaranteeing no "stale state" loop.
+    window.location.href = "/dashboard";
+  };
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file) {
-      setFileName(file.name);
-      setStatus("uploading");
-      
-      // Simulate upload delay before scanning starts
-      setTimeout(() => {
-        startScanning();
-      }, 1500);
+      handleUpload(file);
     }
-  }, [startScanning]);
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { 'application/pdf': ['.pdf'] },
     maxFiles: 1,
-    disabled: status !== "idle"
+    disabled: status === "uploading" || status === "scanning" || status === "complete"
   });
 
   return (
@@ -127,7 +164,7 @@ export default function OnboardingPage() {
             <AnimatePresence mode="wait">
               
               {/* STATE: IDLE (Upload Zone) */}
-              {status === "idle" && (
+              {(status === "idle" || status === "error") && (
                 <motion.div
                   key="idle"
                   initial={{ opacity: 0, scale: 0.95 }}
@@ -141,20 +178,25 @@ export default function OnboardingPage() {
                       "flex-1 border-2 border-dashed rounded-xl flex flex-col items-center justify-center p-10 transition-all duration-300 cursor-pointer group relative overflow-hidden",
                       isDragActive 
                         ? "border-primary bg-primary/5 shadow-[0_0_30px_rgba(124,58,237,0.1)]" 
+                        : status === "error"
+                        ? "border-red-500/50 bg-red-500/5 hover:border-red-500"
                         : "border-white/10 hover:border-primary/50 hover:bg-white/5"
                     )}
                   >
                     <input {...getInputProps()} />
                     
-                    {/* Hover Glow Effect */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
                     <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 border border-white/5 shadow-lg relative z-10">
-                      <UploadCloud className={cn("w-10 h-10 transition-colors", isDragActive ? "text-primary" : "text-muted-foreground group-hover:text-white")} />
+                      {status === "error" ? (
+                         <AlertCircle className="w-10 h-10 text-red-500" />
+                      ) : (
+                         <UploadCloud className={cn("w-10 h-10 transition-colors", isDragActive ? "text-primary" : "text-muted-foreground group-hover:text-white")} />
+                      )}
                     </div>
                     
                     <h3 className="text-xl font-bold text-white mb-2 relative z-10">
-                      {isDragActive ? "Drop profile here..." : "Drag & Drop Resume (PDF)"}
+                      {status === "error" ? "Upload Failed. Try Again." : isDragActive ? "Drop profile here..." : "Drag & Drop Resume (PDF)"}
                     </h3>
                     <p className="text-sm text-muted-foreground relative z-10">or click to browse system files</p>
                   </div>
@@ -199,7 +241,7 @@ export default function OnboardingPage() {
                     <div className="flex justify-between text-xs font-mono uppercase tracking-widest text-muted-foreground">
                       <span className="flex items-center gap-2">
                         <ScanLine className="w-3 h-3 animate-pulse" />
-                        {status === "uploading" ? "Uploading..." : "Analysing Data"}
+                        {status === "uploading" ? "Uploading & Analyzing..." : "Finalizing..."}
                       </span>
                       <span>{Math.round(progress)}%</span>
                     </div>
@@ -219,7 +261,6 @@ export default function OnboardingPage() {
                           {">"} {log}
                         </motion.div>
                       ))}
-                      {status === "uploading" && <span className="text-primary animate-pulse">Establishing handshake...</span>}
                     </div>
                   </div>
                 </motion.div>
@@ -249,9 +290,9 @@ export default function OnboardingPage() {
 
                   <Button 
                     size="xl" 
-                    variant="neon" // Assuming you have this variant, otherwise default
-                    onClick={() => router.push("/dashboard")}
-                    className="w-full max-w-xs group relative overflow-hidden"
+                    variant="default"
+                    onClick={handleEnterMissionControl}
+                    className="w-full max-w-xs group relative overflow-hidden bg-primary hover:bg-primary/90 text-white"
                   >
                     Enter Mission Control <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </Button>

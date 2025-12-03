@@ -1,5 +1,13 @@
-// stores/authStore.ts
 import { create } from 'zustand';
+
+interface ProfileData {
+  skills?: string[];
+  experience_years?: number;
+  seniority?: string;
+  suggested_difficulty?: string;
+  // Allows for other potential keys from the AI
+  [key: string]: any; 
+}
 
 interface User {
   id: string;
@@ -7,34 +15,35 @@ interface User {
   email: string;
   role: string;
   avatar?: string | null;
-
+  // ✅ ADDED: Stores the AI-parsed resume data
+  profileData?: ProfileData | null;
 }
 
 interface AuthState {
   user: User | null;
-  // ✅ CHANGED: isLoading now tracks the initial authentication check
+  // isLoading tracks the initial authentication check
   isLoading: boolean; 
   error: string | null;
   login: (loginData: any) => Promise<boolean>;
   register: (registerData: any) => Promise<boolean>;
-  logout: () => Promise<void>; // ✅ CHANGED: Logout should be async
+  logout: () => Promise<void>; 
   clearError: () => void;
-  // ✅ ADDED: A new action to check auth status on app load
+  // Checks auth status on app load
   checkAuthStatus: () => Promise<void>; 
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  // ✅ CHANGED: Start in a loading state to wait for the initial check
+  // Start in a loading state to wait for the initial check
   isLoading: true, 
   error: null,
 
   clearError: () => set({ error: null }),
 
-  // ✅ ADDED: The new action to verify the user's cookie
+  // Verify the user's cookie via API
   checkAuthStatus: async () => {
     try {
-      const response = await fetch('/api/auth/me'); // New endpoint
+      const response = await fetch('/api/auth/me'); 
       if (!response.ok) {
         throw new Error('Not authenticated');
       }
@@ -46,7 +55,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   login: async (loginData) => {
-    // This action now only needs to set loading for the login action itself
     set({ isLoading: true, error: null }); 
     try {
       const response = await fetch('/api/auth/login', {
@@ -68,14 +76,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
   
-  // ✅ CHANGED: Logout needs to call an API to clear the server cookie
+  // Logout calls API to clear server cookie
   logout: async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     set({ user: null, isLoading: false });
   },
 
   register: async (registerData) => {
-    // This function is well-written and does not need changes.
     set({ isLoading: true, error: null });
     try {
       const response = await fetch('/api/auth/register', {

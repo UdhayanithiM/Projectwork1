@@ -1,30 +1,34 @@
-// app/api/admin/stats/route.ts
-
-import { NextResponse, type NextRequest } from "next/server"; // Import NextRequest
-import { PrismaClient } from "@prisma/client";
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { cookies } from "next/headers";
 import { verifyJwt } from "@/lib/auth";
 
-const prisma = new PrismaClient();
+// 🚨 Force dynamic execution to prevent static generation issues
+export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) { // Use NextRequest to access cookies
+export async function GET() {
+  const token = cookies().get("token")?.value;
+  
+  if (!token) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
-    // CORRECTED: Read the token from the httpOnly cookie
-    const token = request.cookies.get("token")?.value;
+    const payload = await verifyJwt(token);
+    const role = payload?.role?.toUpperCase();
 
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized: No token provided" }, { status: 401 });
+    // Allow both ADMIN and HR to view stats
+    if (role !== "ADMIN" && role !== "HR") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const decoded = await verifyJwt(token);
-
-    if (!decoded || decoded.role !== 'ADMIN') {
-        return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
-    }
-
-    const totalUsers = await prisma.user.count();
-    const totalQuestions = await prisma.codingQuestion.count();
-    const totalAssessments = await prisma.assessment.count();
-    const totalSubmissions = totalAssessments; 
+    // Run parallel queries for efficiency
+    const [totalUsers, totalQuestions, totalAssessments, totalSubmissions] = await Promise.all([
+      prisma.user.count({ where: { role: "STUDENT" } }),
+      prisma.codingQuestion.count(),
+      prisma.assessment.count(),
+      prisma.technicalAssessment.count({ where: { status: "COMPLETED" } }),
+    ]);
 
     return NextResponse.json({
       totalUsers,
@@ -32,12 +36,9 @@ export async function GET(request: NextRequest) { // Use NextRequest to access c
       totalAssessments,
       totalSubmissions,
     });
+
   } catch (error) {
-    console.error("Error fetching admin stats:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    console.error("GET /api/admin/stats error:", error);
+    return NextResponse.json({ error: "Failed to fetch stats" }, { status: 500 });
   }
 }
-

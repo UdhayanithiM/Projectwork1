@@ -3,17 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import { verifyJwt } from "@/lib/auth";
 import { z } from "zod";
+import { Difficulty } from "@prisma/client"; // Import the Enum
 
 // --- GET all coding questions ---
 export async function GET() {
   const token = cookies().get("token");
   const payload = token ? await verifyJwt(token.value) : null;
 
-  // --- THIS IS THE FIX ---
-  // The original code only allowed "ADMIN".
-  // We now check if the user is NOT an ADMIN AND NOT an HR.
-  // This allows both roles to fetch the list of questions.
-  if (!payload || (payload.role.toUpperCase() !== "ADMIN" && payload.role.toUpperCase() !== "HR")) {
+  // Allow ADMIN and HR to view the question bank
+  if (!payload || (payload.role !== "ADMIN" && payload.role !== "HR")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -32,16 +30,18 @@ export async function GET() {
 const questionSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
-  difficulty: z.enum(["Easy", "Medium", "Hard"]),
+  // Map string input to Enum values (EASY, MEDIUM, HARD)
+  difficulty: z.enum(["EASY", "MEDIUM", "HARD"]), 
   testCases: z.array(z.any()).min(1, "At least one test case is required"),
 });
 
 // --- POST - create a new coding question ---
-// This function remains ADMIN-only, which is correct.
 export async function POST(req: Request) {
   const token = cookies().get("token");
   const payload = token ? await verifyJwt(token.value) : null;
-  if (payload?.role.toUpperCase() !== "ADMIN") {
+  
+  // Strict Admin Only
+  if (payload?.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -56,7 +56,12 @@ export async function POST(req: Request) {
     const { title, description, difficulty, testCases } = validation.data;
 
     const newQuestion = await prisma.codingQuestion.create({
-      data: { title, description, difficulty, testCases },
+      data: { 
+        title, 
+        description, 
+        difficulty: difficulty as Difficulty, // Ensure type safety
+        testCases 
+      },
     });
 
     return NextResponse.json(newQuestion, { status: 201 });
@@ -65,5 +70,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to create coding question" }, { status: 500 });
   }
 }
-
-

@@ -1,30 +1,44 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyJwt } from "@/lib/auth";
+import { jwtVerify } from "jose"; // Edge-compatible auth
 import { cookies } from "next/headers";
 import { AIService } from "@/lib/ai-service";
+import { AssessmentStatus } from "@prisma/client";
+
+// Ensure this matches your .env
+const JWT_SECRET = process.env.JWT_SECRET || "default-dev-secret-please-change";
+const secretKey = new TextEncoder().encode(JWT_SECRET);
 
 export async function POST(
   request: Request,
   { params }: { params: { assessmentId: string } }
 ) {
+  console.log(`🚀 [API] Starting Session: ${params.assessmentId}`);
+
   try {
     // 1. Auth Check
-    const cookieStore = cookies();
-    const token = cookieStore.get("token");
-    const user = await verifyJwt(token?.value || "");
+    const token = cookies().get("token")?.value;
+    if (!token) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    let userId: string;
+    try {
+        const { payload } = await jwtVerify(token, secretKey);
+        userId = payload.id as string;
+    } catch (err) {
+        return NextResponse.json({ error: "Invalid Token" }, { status: 403 });
     }
 
     const assessmentId = params.assessmentId;
 
-    // 2. Fetch Assessment Details
+    // 2. Fetch Assessment & Candidate Details
     const assessment = await prisma.assessment.findUnique({
       where: { id: assessmentId },
       include: {
-        candidate: true,
+        candidate: {
+            select: { id: true, name: true, profileData: true } // Fetch profile for context
+        },
       }
     });
 
@@ -32,33 +46,32 @@ export async function POST(
       return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
     }
 
-    // 🛡️ Authorization: Ensure the logged-in user owns this assessment
-    if (assessment.candidateId !== user.id) {
-      return NextResponse.json({ error: "Forbidden: This assessment does not belong to you." }, { status: 403 });
+    // 🛡️ Security: Ownership Check
+    if (assessment.candidateId !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // 3. Update Status in MongoDB
+    // 3. Update Status
     await prisma.assessment.update({
       where: { id: assessmentId },
-      data: { status: "IN_PROGRESS" }
+      data: { status: AssessmentStatus.IN_PROGRESS }
     });
 
-    // 4. Initialize AI Engine (Python)
-    // We wait for this to complete so the session exists before the frontend connects via WebSocket
+    // 4. Initialize AI Engine
+    // Pass rich context so the AI knows who it's talking to
     const aiResponse = await AIService.startSession({
       session_id: assessment.id,
-      candidate_id: user.id,
-      job_title: "Software Engineer", // TODO: Pull from Assessment -> Job relation in future
-      company: "Tech Corp",           // TODO: Pull from Assessment -> Company relation in future
-      personality: "Default Manager"
+      candidate_id: userId,
+      candidate_name: assessment.candidate.name, // "Hi Alex..."
+      job_title: "Full Stack Developer", // Default for now
+      company: "FortiTwin Tech",         // Default for now
+      personality: "Professional Recruiter"
     });
 
     return NextResponse.json(aiResponse);
 
   } catch (error: any) {
-    console.error("Start Interview Error:", error);
-    
-    // Return specific error message to help frontend debug
+    console.error("🔥 Start Interview Error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to start interview session" },
       { status: 500 }

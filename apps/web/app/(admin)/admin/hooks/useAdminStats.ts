@@ -1,5 +1,3 @@
-// app/(admin)/admin/hooks/useAdminStats.ts
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -12,41 +10,49 @@ export interface AdminStats {
   totalSubmissions: number;
 }
 
-// This is our custom hook
+// Custom Hook for fetching Admin Dashboard Metrics
 export function useAdminStats() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
     const fetchStats = async () => {
       try {
         setLoading(true);
-        // The browser automatically sends the secure cookie
-        const response = await fetch("/api/admin/stats");
+        setError(null);
+
+        const response = await fetch("/api/admin/stats", { 
+          signal,
+          cache: "no-store" // Ensure we fetch fresh data
+        });
 
         if (!response.ok) {
-          if (response.status === 403) {
-            throw new Error("Access Forbidden. You might not be an admin.");
-          }
-          throw new Error("Failed to fetch admin statistics");
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Error ${response.status}: Failed to fetch stats`);
         }
         
-        const data = await response.json();
+        const data: AdminStats = await response.json();
         setStats(data);
       } catch (err: any) {
-        setError(err.message);
+        if (err.name !== "AbortError") {
+          console.error("Admin Stats Fetch Error:", err);
+          setError(err.message || "An unexpected error occurred.");
+        }
       } finally {
-        setLoading(false);
+        if (!signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchStats();
-  }, []); // The empty dependency array means this runs once when the component mounts
 
-  // The hook returns the stateful values for the component to use
+    return () => controller.abort();
+  }, []);
+
   return { stats, loading, error };
 }
-
-
-

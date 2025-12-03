@@ -40,10 +40,11 @@ HUME_API_KEY = os.getenv("HUME_API_KEY")
 
 app = FastAPI(
     title="FortiTwin MVP API",
-    version="0.6.0",
+    version="0.6.2", # Bumped version for tracking fixes
     description="Unified AI Engine: Resume Parsing (Groq), Interview Logic, and Hume Proxy.",
 )
 
+# 🚨 Ensure this allows your Next.js frontend origin in production
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -80,7 +81,14 @@ async def parse_resume(file: UploadFile = File(...)):
         
     except Exception as e:
         logger.error(f"PDF extraction failed: {e}")
-        raise HTTPException(status_code=400, detail="Invalid PDF file")
+        # Return a safe fallback so the user flow doesn't break
+        return {
+            "skills": ["General"],
+            "experience_years": 0,
+            "seniority": "Junior",
+            "suggested_difficulty": "EASY",
+            "error": "PDF_READ_ERROR"
+        }
 
     # 2. Analyze with Groq
     if not groq_client:
@@ -104,12 +112,15 @@ async def parse_resume(file: UploadFile = File(...)):
             "'suggested_difficulty' (string: 'EASY', 'MEDIUM', 'HARD')."
         )
 
+        # ✅ FIX: Use the latest supported model to prevent 400 Bad Request
+        model_name = "llama-3.3-70b-versatile" 
+
         chat_completion = groq_client.chat.completions.create(
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Resume Text:\n{text}"}
             ],
-            model="llama-3.1-70b-versatile",
+            model=model_name,
             temperature=0.1, # Low temp for consistent JSON
             response_format={"type": "json_object"}
         )
@@ -122,12 +133,14 @@ async def parse_resume(file: UploadFile = File(...)):
 
     except Exception as e:
         logger.error(f"Groq Analysis failed: {e}")
-        # Fallback to safe default
+        # ✅ CRITICAL FALLBACK: Return valid JSON even if Groq fails
+        # This prevents the frontend from crashing/looping back to onboarding
         return {
-            "skills": ["General"],
+            "skills": ["General Technical Skills"],
             "experience_years": 1,
             "seniority": "Junior",
-            "suggested_difficulty": "EASY"
+            "suggested_difficulty": "EASY",
+            "note": "AI Analysis Failed, using defaults."
         }
 
 # -------------------------------------------------------------------
@@ -349,7 +362,6 @@ async def hume_websocket_proxy(websocket: WebSocket, session_id: str):
                             await SESSION_STORE.add_transcript(session_id, "candidate", user_text)
                             
                             # Generate next AI question dynamically via Groq
-                            # (Here we use the engine logic to fetch next Q based on transcript)
                             try:
                                 curr_sess = await SESSION_STORE.get_session(session_id)
                                 next_q = ENGINE.next_question(
@@ -425,9 +437,10 @@ def ping_all():
     groq_status = {"ok": False}
     try:
         if groq_client:
+            # Use current model to check availability
             groq_client.chat.completions.create(
                 messages=[{"role": "user", "content": "hi"}],
-                model="llama-3.1-8b-instant"
+                model="llama-3.1-8b-instant" 
             )
             groq_status = {"ok": True}
         else:

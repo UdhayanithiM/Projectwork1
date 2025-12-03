@@ -1,11 +1,22 @@
-// app/(admin)/admin/users/page.tsx
-
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { 
+  Loader2, 
+  PlusCircle, 
+  MoreHorizontal, 
+  Search, 
+  UserPlus, 
+  Trash2, 
+  Edit2, 
+  ShieldAlert,
+  Mail,
+  Calendar,
+  User as UserIcon
+} from "lucide-react";
 
 import {
   Dialog,
@@ -16,25 +27,62 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { 
+  Table, 
+  TableHeader, 
+  TableRow, 
+  TableHead, 
+  TableBody, 
+  TableCell 
+} from "@/components/ui/table";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { GlassPanel } from "@/components/ui/glass-panel";
+import { cn } from "@/lib/utils";
+
+// --- Types ---
+type Role = "STUDENT" | "HR" | "ADMIN";
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role: "STUDENT" | "HR" | "ADMIN";
+  role: Role;
   createdAt: string;
 }
 
@@ -49,18 +97,19 @@ type AddUserFormData = z.infer<typeof addUserSchema>;
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
+  
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  
   const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
+  
   const [isEditUserDialogOpen, setIsEditUserDialogOpen] = useState(false);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
+  
   const [showPassword, setShowPassword] = useState(false);
-
-  // keep a ref to focus the first field when the dialog opens
-  const nameInputRef = useRef<HTMLInputElement | null>(null);
 
   const addUserForm = useForm<AddUserFormData>({
     resolver: zodResolver(addUserSchema),
@@ -72,7 +121,7 @@ export default function AdminUsersPage() {
     },
   });
 
-  // fetch users
+  // --- Fetch Users ---
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -80,8 +129,9 @@ export default function AdminUsersPage() {
       if (!response.ok) throw new Error("Failed to fetch users.");
       const data = await response.json();
       setUsers(data || []);
+      setFilteredUsers(data || []);
     } catch (err: any) {
-      setError(err?.message ?? "Unknown error");
+      toast.error("Error", { description: err.message });
     } finally {
       setLoading(false);
     }
@@ -91,56 +141,45 @@ export default function AdminUsersPage() {
     fetchUsers();
   }, []);
 
-  // focus first input when dialog opens
+  // --- Search Logic ---
   useEffect(() => {
-    if (isAddUserDialogOpen) {
-      // small timeout to allow dialog to render
-      setTimeout(() => nameInputRef.current?.focus(), 50);
+    if (!searchQuery) {
+        setFilteredUsers(users);
+    } else {
+        const lower = searchQuery.toLowerCase();
+        setFilteredUsers(users.filter(u => 
+            u.name.toLowerCase().includes(lower) || 
+            u.email.toLowerCase().includes(lower) ||
+            u.role.toLowerCase().includes(lower)
+        ));
     }
-  }, [isAddUserDialogOpen]);
+  }, [searchQuery, users]);
 
+  // --- Create User ---
   const onAddUserSubmit = async (data: AddUserFormData) => {
     try {
-      // clear previous server-side errors
-      addUserForm.clearErrors();
-
       const response = await fetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
 
-      let result: any = {};
-      try { result = await response.json(); } catch (e) { /* ignore json parse error */ }
+      const result = await response.json();
 
       if (!response.ok) {
-        // if server returned field-level validation errors in a common shape, apply them to the form
-        if (result && typeof result === "object") {
-          if (result.errors && typeof result.errors === "object") {
-            Object.entries(result.errors).forEach(([k, v]) => {
-              addUserForm.setError(k as any, { type: "server", message: String(v) });
-            });
-            return;
-          }
-
-          if (result.field && result.message) {
-            addUserForm.setError(result.field as any, { type: "server", message: String(result.message) });
-            return;
-          }
-        }
-
-        throw new Error(result?.error || "Failed to create user.");
+        throw new Error(result.error || "Failed to create user.");
       }
 
-      toast.success("User created successfully!");
+      toast.success("User Created", { description: `${data.name} has been added to the system.` });
       setIsAddUserDialogOpen(false);
       addUserForm.reset();
       fetchUsers();
     } catch (err: any) {
-      toast.error(err?.message || "Error creating user");
+      toast.error("Creation Failed", { description: err.message });
     }
   };
 
+  // --- Delete User ---
   const handleDeleteClick = (user: User) => { setUserToDelete(user); setIsDeleteDialogOpen(true); };
 
   const confirmDelete = async () => {
@@ -148,12 +187,17 @@ export default function AdminUsersPage() {
     try {
       const response = await fetch(`/api/admin/users/${userToDelete.id}`, { method: 'DELETE' });
       if (!response.ok) throw new Error((await response.json()).error);
-      toast.success("User deleted successfully!");
+      toast.success("User Deleted", { description: "Account removed successfully." });
       fetchUsers();
-    } catch (err: any) { toast.error("Error deleting user", { description: err.message }); }
-    finally { setIsDeleteDialogOpen(false); setUserToDelete(null); }
+    } catch (err: any) { 
+        toast.error("Delete Failed", { description: err.message }); 
+    } finally { 
+        setIsDeleteDialogOpen(false); 
+        setUserToDelete(null); 
+    }
   };
 
+  // --- Edit User ---
   const handleEditClick = (user: User) => { setUserToEdit(user); setIsEditUserDialogOpen(true); };
 
   const handleEditUserSubmit = async (e: React.FormEvent) => {
@@ -161,100 +205,144 @@ export default function AdminUsersPage() {
     if (!userToEdit) return;
     try {
       const response = await fetch(`/api/admin/users/${userToEdit.id}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        method: 'PUT', 
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: userToEdit.name, email: userToEdit.email, role: userToEdit.role }),
       });
       if (!response.ok) throw new Error((await response.json()).error);
-      toast.success("User updated successfully!");
-      setIsEditUserDialogOpen(false); fetchUsers(); setUserToEdit(null);
-    } catch (err: any) { toast.error("Error updating user", { description: err.message }); }
-  };
-
-  const getRoleBadgeVariant = (role: User["role"]) => {
-    switch (role?.toUpperCase()) {
-      case "ADMIN": return "destructive";
-      case "HR": return "default";
-      default: return "secondary";
+      toast.success("User Updated", { description: "Changes saved successfully." });
+      setIsEditUserDialogOpen(false); 
+      fetchUsers(); 
+      setUserToEdit(null);
+    } catch (err: any) { 
+        toast.error("Update Failed", { description: err.message }); 
     }
   };
 
-  if (error) { return <div className="text-red-500 font-semibold p-4 border rounded-md">Error: {error}</div>; }
+  const roleStyles = {
+    ADMIN: "bg-red-500/10 text-red-500 border-red-500/20",
+    HR: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+    STUDENT: "bg-blue-500/10 text-blue-500 border-blue-500/20"
+  };
 
   return (
-    <>
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>View, create, edit, and delete users.</CardDescription>
-            </div>
-            <Button onClick={() => setIsAddUserDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4"/> Add New User</Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Joined On</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell><Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge></TableCell>
-                    <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleEditClick(user)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-500" onClick={() => handleDeleteClick(user)}>Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+    <div className="space-y-6 p-6">
+      
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-heading font-bold text-white">User Management</h1>
+          <p className="text-muted-foreground mt-1">Control access, manage roles, and oversee the user base.</p>
+        </div>
+        <Button onClick={() => setIsAddUserDialogOpen(true)} className="bg-primary hover:bg-primary/90 text-white shadow-glow-primary">
+            <UserPlus className="mr-2 h-4 w-4"/> Add New User
+        </Button>
+      </div>
 
-      {/* Add User Dialog */}
-      <Dialog
-        open={isAddUserDialogOpen}
-        onOpenChange={(open) => {
-          setIsAddUserDialogOpen(open);
-          // reset form when dialog is closed
-          if (!open) addUserForm.reset();
-        }}
-      >
-        <DialogContent className="sm:max-w-[480px]">
+      {/* Main Content */}
+      <GlassPanel className="p-0 overflow-hidden bg-black/40 border-white/10">
+        
+        {/* Toolbar */}
+        <div className="p-4 border-b border-white/10 bg-white/5 flex flex-col sm:flex-row justify-between gap-4 items-center">
+            <div className="relative w-full max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    placeholder="Search users..." 
+                    className="pl-9 bg-black/50 border-white/10 text-white placeholder:text-white/20 focus-visible:ring-primary/50"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+                <ShieldAlert className="w-3 h-3 text-primary" />
+                ADMIN ACCESS ONLY
+            </div>
+        </div>
+
+        {/* Table */}
+        <div className="p-0">
+            <Table>
+                <TableHeader className="bg-transparent hover:bg-transparent">
+                    <TableRow className="border-white/5 hover:bg-transparent">
+                        <TableHead className="text-muted-foreground pl-6">Identity</TableHead>
+                        <TableHead className="text-muted-foreground">Role</TableHead>
+                        <TableHead className="text-muted-foreground">Joined</TableHead>
+                        <TableHead className="text-right text-muted-foreground pr-6">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {loading ? (
+                        <TableRow><TableCell colSpan={4} className="h-32 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></TableCell></TableRow>
+                    ) : filteredUsers.length === 0 ? (
+                        <TableRow><TableCell colSpan={4} className="h-32 text-center text-muted-foreground">No users match your filters.</TableCell></TableRow>
+                    ) : (
+                        filteredUsers.map((user) => (
+                            <TableRow key={user.id} className="border-white/5 hover:bg-white/5 transition-colors group">
+                                <TableCell className="pl-6">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-9 w-9 rounded-full bg-white/10 flex items-center justify-center text-white/50">
+                                            <UserIcon className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <div className="font-medium text-white group-hover:text-primary transition-colors">{user.name}</div>
+                                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                                <Mail className="h-3 w-3" /> {user.email}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant="outline" className={cn("border font-bold", roleStyles[user.role])}>
+                                        {user.role}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                                        <Calendar className="h-3.5 w-3.5" />
+                                        {new Date(user.createdAt).toLocaleDateString()}
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-right pr-6">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-white/10 text-muted-foreground">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="bg-[#0a0a0b] border-white/10 text-white">
+                                            <DropdownMenuLabel>Manage User</DropdownMenuLabel>
+                                            <DropdownMenuItem onClick={() => handleEditClick(user)} className="cursor-pointer focus:bg-white/10">
+                                                <Edit2 className="mr-2 h-3.5 w-3.5" /> Edit Details
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem className="text-red-400 cursor-pointer focus:bg-red-500/10 focus:text-red-400" onClick={() => handleDeleteClick(user)}>
+                                                <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete Account
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                        ))
+                    )}
+                </TableBody>
+            </Table>
+        </div>
+      </GlassPanel>
+
+      {/* --- ADD USER DIALOG --- */}
+      <Dialog open={isAddUserDialogOpen} onOpenChange={setIsAddUserDialogOpen}>
+        <DialogContent className="sm:max-w-[480px] bg-[#0a0a0b] border-white/10 text-white">
           <DialogHeader>
             <DialogTitle>Add New User</DialogTitle>
-            <DialogDescription>Fill in the details to create a new user.</DialogDescription>
+            <DialogDescription className="text-muted-foreground">Create a new account manually. Required for HR/Admin roles.</DialogDescription>
           </DialogHeader>
 
           <Form {...addUserForm}>
             <form onSubmit={addUserForm.handleSubmit(onAddUserSubmit)} className="space-y-4">
               <FormField control={addUserForm.control} name="name" render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="add-name">Name</FormLabel>
+                  <FormLabel className="text-xs uppercase font-bold text-muted-foreground">Full Name</FormLabel>
                   <FormControl>
-                    <Input id="add-name" placeholder="John Doe" {...field} ref={(e) => { (field.ref as any)(e); nameInputRef.current = e; }} aria-invalid={!!addUserForm.formState.errors.name} aria-describedby={addUserForm.formState.errors.name ? 'add-name-error' : undefined} />
+                    <Input placeholder="John Doe" {...field} className="bg-black/50 border-white/10 text-white" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -262,9 +350,9 @@ export default function AdminUsersPage() {
 
               <FormField control={addUserForm.control} name="email" render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="add-email">Email</FormLabel>
+                  <FormLabel className="text-xs uppercase font-bold text-muted-foreground">Email Address</FormLabel>
                   <FormControl>
-                    <Input id="add-email" type="email" placeholder="john.doe@example.com" {...field} aria-invalid={!!addUserForm.formState.errors.email} aria-describedby={addUserForm.formState.errors.email ? 'add-email-error' : undefined} />
+                    <Input placeholder="john@company.com" {...field} className="bg-black/50 border-white/10 text-white" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -272,12 +360,12 @@ export default function AdminUsersPage() {
 
               <FormField control={addUserForm.control} name="password" render={({ field }) => (
                 <FormItem>
-                  <FormLabel htmlFor="add-password">Password</FormLabel>
+                  <FormLabel className="text-xs uppercase font-bold text-muted-foreground">Password</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <Input id="add-password" type={showPassword ? "text" : "password"} {...field} className="pr-12" aria-invalid={!!addUserForm.formState.errors.password} aria-describedby={addUserForm.formState.errors.password ? 'add-password-error' : undefined} />
-                      <Button type="button" variant="ghost" size="icon" onClick={() => setShowPassword((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2">
-                        {showPassword ? 'Hide' : 'Show'}
+                      <Input type={showPassword ? "text" : "password"} {...field} className="bg-black/50 border-white/10 text-white pr-14" />
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setShowPassword(!showPassword)} className="absolute right-1 top-1 h-7 text-xs text-muted-foreground hover:text-white">
+                        {showPassword ? "Hide" : "Show"}
                       </Button>
                     </div>
                   </FormControl>
@@ -287,14 +375,14 @@ export default function AdminUsersPage() {
 
               <FormField control={addUserForm.control} name="role" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel className="text-xs uppercase font-bold text-muted-foreground">Role</FormLabel>
                   <FormControl>
                     <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className="w-full"><SelectValue placeholder="Select a role" /></SelectTrigger>
-                      <SelectContent>
+                      <SelectTrigger className="bg-black/50 border-white/10 text-white"><SelectValue /></SelectTrigger>
+                      <SelectContent className="bg-[#0a0a0b] border-white/10 text-white">
                         <SelectItem value="STUDENT">Student</SelectItem>
-                        <SelectItem value="HR">HR</SelectItem>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
+                        <SelectItem value="HR">HR Manager</SelectItem>
+                        <SelectItem value="ADMIN">Administrator</SelectItem>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -302,12 +390,9 @@ export default function AdminUsersPage() {
                 </FormItem>
               )} />
 
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">Cancel</Button>
-                </DialogClose>
-                <Button type="submit" disabled={addUserForm.formState.isSubmitting} aria-busy={addUserForm.formState.isSubmitting}>
-                  {addUserForm.formState.isSubmitting ? 'Creating...' : 'Create User'}
+              <DialogFooter className="pt-4">
+                <Button type="submit" disabled={addUserForm.formState.isSubmitting} className="w-full bg-primary hover:bg-primary/90 text-white">
+                  {addUserForm.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : "Create Account"}
                 </Button>
               </DialogFooter>
             </form>
@@ -315,55 +400,58 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit User Dialog */}
+      {/* --- EDIT USER DIALOG --- */}
       <Dialog open={isEditUserDialogOpen} onOpenChange={setIsEditUserDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]"><DialogHeader><DialogTitle>Edit User</DialogTitle><DialogDescription>Update the user's details below.</DialogDescription></DialogHeader>
-          {userToEdit && (
-            <form onSubmit={handleEditUserSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-name" className="text-right">Name</Label>
-                  <Input id="edit-name" value={userToEdit.name} onChange={(e) => setUserToEdit({...userToEdit, name: e.target.value})} className="col-span-3" required/>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-email" className="text-right">Email</Label>
-                  <Input id="edit-email" type="email" value={userToEdit.email} onChange={(e) => setUserToEdit({...userToEdit, email: e.target.value})} className="col-span-3" required/>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit-role" className="text-right">Role</Label>
-                  <Select onValueChange={(v: "STUDENT" | "HR" | "ADMIN") => setUserToEdit({...userToEdit, role: v})} value={userToEdit.role}>
-                    <SelectTrigger className="col-span-3"><SelectValue placeholder="Select a role" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="STUDENT">Student</SelectItem>
-                      <SelectItem value="HR">HR</SelectItem>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
-                <Button type="submit">Save Changes</Button>
-              </DialogFooter>
-            </form>
-          )}
+        <DialogContent className="sm:max-w-[425px] bg-[#0a0a0b] border-white/10 text-white">
+            <DialogHeader>
+                <DialogTitle>Edit User</DialogTitle>
+                <DialogDescription className="text-muted-foreground">Modify account details.</DialogDescription>
+            </DialogHeader>
+            {userToEdit && (
+                <form onSubmit={handleEditUserSubmit} className="space-y-4">
+                    <div className="space-y-2">
+                        <Label className="text-xs uppercase font-bold text-muted-foreground">Name</Label>
+                        <Input value={userToEdit.name} onChange={(e) => setUserToEdit({...userToEdit, name: e.target.value})} className="bg-black/50 border-white/10 text-white"/>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-xs uppercase font-bold text-muted-foreground">Email</Label>
+                        <Input value={userToEdit.email} onChange={(e) => setUserToEdit({...userToEdit, email: e.target.value})} className="bg-black/50 border-white/10 text-white"/>
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="text-xs uppercase font-bold text-muted-foreground">Role</Label>
+                        <Select value={userToEdit.role} onValueChange={(v: Role) => setUserToEdit({...userToEdit, role: v})}>
+                            <SelectTrigger className="bg-black/50 border-white/10 text-white"><SelectValue/></SelectTrigger>
+                            <SelectContent className="bg-[#0a0a0b] border-white/10 text-white">
+                                <SelectItem value="STUDENT">Student</SelectItem>
+                                <SelectItem value="HR">HR</SelectItem>
+                                <SelectItem value="ADMIN">Admin</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <DialogFooter>
+                        <Button type="submit" className="bg-primary hover:bg-primary/90 text-white w-full">Save Changes</Button>
+                    </DialogFooter>
+                </form>
+            )}
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* --- DELETE CONFIRMATION --- */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="bg-[#0a0a0b] border-white/10 text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>This action will permanently delete the user account for <span className="font-semibold">{userToDelete?.name}</span>.</AlertDialogDescription>
+            <AlertDialogTitle className="text-red-500">Delete User Account?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              This action cannot be undone. This will permanently delete <span className="text-white font-bold">{userToDelete?.name}</span> and all their associated data (assessments, reports).
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete}>Continue</AlertDialogAction>
+            <AlertDialogCancel className="border-white/10 bg-transparent text-white hover:bg-white/5 hover:text-white">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700 text-white">Confirm Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+
+    </div>
   );
 }
-

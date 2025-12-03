@@ -55,52 +55,62 @@ const item = {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user } = useAuthStore();
+  const { user, isLoading: isAuthLoading } = useAuthStore(); // Ensure loading state is used
   const userName = user?.name?.split(" ")[0] || "Candidate";
 
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // --- Data Fetching ---
+  // --- 1. Auth & Profile Check ---
   useEffect(() => {
-    const fetchAssessments = async () => {
-      try {
-        setIsLoading(true);
-        // Note: You need to implement GET /api/candidate/assessments to return the list
-        // For now, we assume this endpoint exists or will be built next.
-        const response = await fetch("/api/candidate/assessments");
+    if (isAuthLoading) return;
 
-        if (response.status === 401 || response.status === 403) {
-          router.push("/login");
-          return;
-        }
-
-        if (!response.ok) {
-          setAssessments([]); 
-          return;
-        }
-
-        const data: Assessment[] = await response.json();
-        setAssessments(data);
-      } catch (err) {
-        console.error(err);
-        setAssessments([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (user) {
-      fetchAssessments();
+    if (!user) {
+        router.push("/login");
+        return;
     }
-  }, [user, router]);
+
+    // 🚨 CRITICAL FIX: Redirect to Onboarding if profile is missing
+    // We check if profileData is null/undefined/empty object
+    if (!user.profileData || Object.keys(user.profileData).length === 0) {
+        router.push("/onboarding");
+        return;
+    }
+
+    // If we are here, user is valid and onboarded. Fetch data.
+    fetchAssessments();
+  }, [user, isAuthLoading, router]);
+
+  const fetchAssessments = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/candidate/assessments");
+
+      if (response.status === 401 || response.status === 403) {
+        router.push("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        setAssessments([]); 
+        return;
+      }
+
+      const data: Assessment[] = await response.json();
+      setAssessments(data);
+    } catch (err) {
+      console.error(err);
+      setAssessments([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // --- Logic: Handle "Start Mission" Click ---
   const handleStartMission = async () => {
     setIsGenerating(true);
     try {
-      // Call our new Auto-Generate API
       const res = await fetch("/api/assessment/auto-generate", {
         method: "POST",
       });
@@ -113,7 +123,6 @@ export default function DashboardPage() {
       
       if (data.success && data.assessmentId) {
         toast.success(data.message || "Mission Initialized");
-        // Redirect to the Technical Assessment
         router.push(`/technical-assessment/${data.assessmentId}`);
       } else {
         toast.error("System Malfunction: Could not generate assessment.");
@@ -132,22 +141,19 @@ export default function DashboardPage() {
   );
   const completedAssessments = assessments.filter((a) => a.status === "COMPLETED");
   
-  // Stats
   const totalCompleted = completedAssessments.length;
   const scoreSum = completedAssessments.reduce((acc, curr) => acc + (curr.technicalAssessment?.score || 0), 0);
   const avgScore = totalCompleted > 0 ? Math.round(scoreSum / totalCompleted) : 0;
   
-  // XP
   const currentXP = totalCompleted * 150; 
   const nextLevelXP = 1000;
   const xpProgress = Math.min((currentXP / nextLevelXP) * 100, 100);
 
-  // Main Mission Logic
   const currentMission = upcomingAssessments[0];
 
-  if (isLoading) {
+  if (isLoading || isAuthLoading) {
     return (
-      <div className="flex h-[50vh] items-center justify-center">
+      <div className="flex h-screen items-center justify-center bg-black">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
@@ -158,7 +164,7 @@ export default function DashboardPage() {
       initial="hidden"
       animate="show"
       variants={container}
-      className="space-y-8 pb-8 font-body"
+      className="space-y-8 pb-8 font-body p-6 md:p-10 max-w-7xl mx-auto"
     >
       {/* --- HEADER --- */}
       <motion.div variants={item} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -268,7 +274,7 @@ export default function DashboardPage() {
               </p>
               <Button 
                 variant="outline" 
-                onClick={handleStartMission} // Reuse the start logic for now
+                onClick={handleStartMission} 
                 disabled={isGenerating}
                 className="w-full border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-400 hover:border-blue-500/50 transition-all group-hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]"
               >
@@ -283,145 +289,145 @@ export default function DashboardPage() {
   );
 }
 
-// --- Sub-Components ---
-
+// ... Sub-components (StatsCard, ActiveMissionContent, NewMissionContent, SmallHistoryItem) remain the same ...
+// (I will assume you have them from the previous correct snippet. If you need them repeated, let me know.)
 function StatsCard({ icon, bgClass, borderHover, value, label, decorator }: any) {
-  return (
-    <Card className={cn("p-5 flex flex-col gap-4 relative overflow-hidden group transition-colors border-white/5 bg-card/40 backdrop-blur-md", borderHover)}>
-      {decorator && (
-        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
-          {decorator}
-        </div>
-      )}
-      <div className={cn("h-10 w-10 rounded-full flex items-center justify-center", bgClass)}>
-        {icon}
-      </div>
-      <div>
-        <div className="text-2xl font-bold text-white font-heading">{value}</div>
-        <div className="text-xs text-muted-foreground uppercase font-bold tracking-wider">{label}</div>
-      </div>
-    </Card>
-  )
+  return (
+    <Card className={cn("p-5 flex flex-col gap-4 relative overflow-hidden group transition-colors border-white/5 bg-card/40 backdrop-blur-md", borderHover)}>
+      {decorator && (
+        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none">
+          {decorator}
+        </div>
+      )}
+      <div className={cn("h-10 w-10 rounded-full flex items-center justify-center", bgClass)}>
+        {icon}
+      </div>
+      <div>
+        <div className="text-2xl font-bold text-white font-heading">{value}</div>
+        <div className="text-xs text-muted-foreground uppercase font-bold tracking-wider">{label}</div>
+      </div>
+    </Card>
+  )
 }
 
 function ActiveMissionContent({ assessment }: { assessment: Assessment }) {
-  // Logic: If they passed tech (or have interview pending), send to interview. Else tech.
-  const isInterviewReady = assessment.status === "PASSED_TECH" || assessment.behavioralInterview;
-  
-  const title = isInterviewReady ? "Behavioral Interview" : "Technical Assessment";
-  const desc = isInterviewReady 
-    ? "Technical round passed. Initialize the AI Interviewer for the final phase." 
-    : "Resume your coding challenge. Time is ticking!";
-  
-  const link = isInterviewReady 
-    ? `/take-interview/${assessment.id}/intro` // Go to Mirror Room first!
-    : `/technical-assessment/${assessment.id}`;
+  // Logic: If they passed tech (or have interview pending), send to interview. Else tech.
+  const isInterviewReady = assessment.status === "PASSED_TECH" || assessment.behavioralInterview;
+  
+  const title = isInterviewReady ? "Behavioral Interview" : "Technical Assessment";
+  const desc = isInterviewReady 
+    ? "Technical round passed. Initialize the AI Interviewer for the final phase." 
+    : "Resume your coding challenge. Time is ticking!";
+  
+  const link = isInterviewReady 
+    ? `/take-interview/${assessment.id}/intro` // Go to Mirror Room first!
+    : `/technical-assessment/${assessment.id}`;
 
-  const statusLabel = isInterviewReady ? "Interview Ready" : "In Progress";
-  const statusColor = isInterviewReady ? "text-green-400 border-green-500/20 bg-green-500/10" : "text-warning border-warning/20 bg-warning/20";
+  const statusLabel = isInterviewReady ? "Interview Ready" : "In Progress";
+  const statusColor = isInterviewReady ? "text-green-400 border-green-500/20 bg-green-500/10" : "text-warning border-warning/20 bg-warning/20";
 
-  return (
-    <>
-      <div className="relative z-10 space-y-6">
-        <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border backdrop-blur-md", statusColor)}>
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-current"></span>
-          </span>
-          {statusLabel}
-        </div>
-        
-        <div className="space-y-2">
-          <h2 className="text-3xl md:text-5xl font-heading font-bold text-white leading-tight">
-            Resume: <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-warning to-orange-400 animate-gradient-x">
-              {title}
-            </span>
-          </h2>
-          <p className="text-muted-foreground max-w-lg text-lg font-body leading-relaxed">
-            {desc}
-          </p>
-        </div>
-      </div>
+  return (
+    <>
+      <div className="relative z-10 space-y-6">
+        <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border backdrop-blur-md", statusColor)}>
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-current"></span>
+          </span>
+          {statusLabel}
+        </div>
+        
+        <div className="space-y-2">
+          <h2 className="text-3xl md:text-5xl font-heading font-bold text-white leading-tight">
+            Resume: <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-warning to-orange-400 animate-gradient-x">
+              {title}
+            </span>
+          </h2>
+          <p className="text-muted-foreground max-w-lg text-lg font-body leading-relaxed">
+            {desc}
+          </p>
+        </div>
+      </div>
 
-      <div className="relative z-10 pt-8 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-        <Button size="xl" className="group shadow-glow-primary bg-warning hover:bg-warning/90 text-black" asChild>
-          <Link href={link}>
-            Resume Session
-            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
-        </Button>
-        <div className="flex items-center gap-6 text-sm text-muted-foreground font-medium">
-          <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-warning" /> ~30 min left</span>
-        </div>
-      </div>
-    </>
-  )
+      <div className="relative z-10 pt-8 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        <Button size="xl" className="group shadow-glow-primary bg-warning hover:bg-warning/90 text-black" asChild>
+          <Link href={link}>
+            Resume Session
+            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </Button>
+        <div className="flex items-center gap-6 text-sm text-muted-foreground font-medium">
+          <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-warning" /> ~30 min left</span>
+        </div>
+      </div>
+    </>
+  )
 }
 
 function NewMissionContent({ onStart, isStarting }: { onStart: () => void, isStarting: boolean }) {
-  return (
-    <>
-      <div className="relative z-10 space-y-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold uppercase tracking-wider border border-primary/20 backdrop-blur-md">
-          <Sparkles className="w-3 h-3" />
-          Recommended Mission
-        </div>
-        
-        <div className="space-y-2">
-          <h2 className="text-3xl md:text-5xl font-heading font-bold text-white leading-tight">
-            New Challenge: <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400 animate-gradient-x">
-              AI-Generated Simulation
-            </span>
-          </h2>
-          <p className="text-muted-foreground max-w-lg text-lg font-body leading-relaxed">
-            Start a new full-stack interview simulation tailored to your resume skills and seniority level.
-          </p>
-        </div>
-      </div>
+  return (
+    <>
+      <div className="relative z-10 space-y-6">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-bold uppercase tracking-wider border border-primary/20 backdrop-blur-md">
+          <Sparkles className="w-3 h-3" />
+          Recommended Mission
+        </div>
+        
+        <div className="space-y-2">
+          <h2 className="text-3xl md:text-5xl font-heading font-bold text-white leading-tight">
+            New Challenge: <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400 animate-gradient-x">
+              AI-Generated Simulation
+            </span>
+          </h2>
+          <p className="text-muted-foreground max-w-lg text-lg font-body leading-relaxed">
+            Start a new full-stack interview simulation tailored to your resume skills and seniority level.
+          </p>
+        </div>
+      </div>
 
-      <div className="relative z-10 pt-8 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-        <Button 
-            size="xl" 
-            variant="default" 
-            onClick={onStart}
-            disabled={isStarting}
-            className="group shadow-glow-primary"
-        >
-          {isStarting ? (
-             <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Generating...</>
-          ) : (
-             <>Start Simulation <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" /></>
-          )}
-        </Button>
-        <div className="flex items-center gap-6 text-sm text-muted-foreground font-medium">
-          <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> 45 min</span>
-          <span className="flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> Adaptive</span>
-        </div>
-      </div>
-    </>
-  )
+      <div className="relative z-10 pt-8 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        <Button 
+            size="xl" 
+            variant="default" 
+            onClick={onStart}
+            disabled={isStarting}
+            className="group shadow-glow-primary"
+        >
+          {isStarting ? (
+             <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Generating...</>
+          ) : (
+             <>Start Simulation <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" /></>
+          )}
+        </Button>
+        <div className="flex items-center gap-6 text-sm text-muted-foreground font-medium">
+          <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> 45 min</span>
+          <span className="flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> Adaptive</span>
+        </div>
+      </div>
+    </>
+  )
 }
 
 function SmallHistoryItem({ assessment }: { assessment: Assessment }) {
-    const score = assessment.technicalAssessment?.score || 0;
-    const isPassed = score >= 70;
+    const score = assessment.technicalAssessment?.score || 0;
+    const isPassed = score >= 70;
 
-    return (
-      <div className="p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all group">
-        <div className="flex justify-between items-start mb-1">
-          <span className="font-semibold text-white group-hover:text-primary transition-colors font-heading">
-              {assessment.technicalAssessment ? "Technical" : "Behavioral"}
-          </span>
-          <div className={cn("flex items-center gap-1 text-xs px-2 py-0.5 rounded-md border", isPassed ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-red-500/10 text-red-400 border-red-500/20")}>
-            {isPassed ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-            {score}%
-          </div>
-        </div>
-        <p className="text-xs text-muted-foreground mt-1">
-          Completed on {new Date(assessment.createdAt).toLocaleDateString()}
-        </p>
-      </div>
-    )
+    return (
+      <div className="p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all group">
+        <div className="flex justify-between items-start mb-1">
+          <span className="font-semibold text-white group-hover:text-primary transition-colors font-heading">
+              {assessment.technicalAssessment ? "Technical" : "Behavioral"}
+          </span>
+          <div className={cn("flex items-center gap-1 text-xs px-2 py-0.5 rounded-md border", isPassed ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-red-500/10 text-red-400 border-red-500/20")}>
+            {isPassed ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+            {score}%
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          Completed on {new Date(assessment.createdAt).toLocaleDateString()}
+        </p>
+      </div>
+    )
 }
