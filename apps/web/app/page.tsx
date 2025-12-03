@@ -1,177 +1,237 @@
-// file: apps/web/app/page.tsx
-'use client';
+"use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Video, FileText, BarChart3, Star } from "lucide-react";
-import { MainLayout } from "@/components/layout/MainLayout";
-// The correct import is without '/next'
-import Spline from "@splinetool/react-spline";
+import {
+  ArrowRight,
+  Video,
+  Code2,
+  Sparkles,
+  CheckCircle2,
+  Play,
+  Trophy,
+  Zap,
+} from "lucide-react";
 
-// --- Reusable Feature Card Component ---
-const FeatureCard = ({
-  icon: Icon,
-  title,
-  description,
-}: {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-}) => {
-  return (
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, y: 20 },
-        visible: {
-          opacity: 1,
-          y: 0,
-          transition: { duration: 0.5 },
-        },
-      }}
-      whileHover={{ y: -5, scale: 1.02 }}
-      className="w-full"
-    >
-      <Card className="text-center h-full transition-shadow duration-300 hover:shadow-xl">
-        <CardHeader>
-          <div className="mx-auto h-14 w-14 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-            <Icon className="h-8 w-8 text-primary" />
-          </div>
-          <CardTitle>{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">{description}</p>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-};
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import { Navbar } from "@/components/layout/Navbar";
+
+const SplineScene = dynamic(() => import("@/components/SplineScene"), {
+  ssr: false,
+});
+
+
+
+
 
 export default function LandingPage() {
   return (
-    <MainLayout>
-      {/* --- Hero Section --- */}
-      <section className="relative py-20 md:py-28 overflow-hidden bg-gradient-to-b from-background via-background to-muted/40">
-        <div className="container z-10 relative">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+    <div className="min-h-screen bg-background relative overflow-x-hidden selection:bg-primary/20 font-body">
+      <Navbar />
+
+      {/* --- GLOBAL AURA BACKGROUND --- */}
+      <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-500/10 rounded-full blur-[120px] animate-pulse-soft" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/10 rounded-full blur-[120px] animate-pulse-soft delay-1000" />
+        <div className="absolute top-[20%] right-[20%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[100px] animate-float" />
+      </div>
+
+      <main className="flex flex-col">
+        {/* --- HERO SECTION --- */}
+        <section className="relative pt-20 pb-32 md:pt-32 md:pb-48 container">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            
+            {/* TEXT CONTENT */}
             <motion.div
-              className="space-y-6 text-center md:text-left"
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="space-y-8 text-center lg:text-left z-10"
             >
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-                The Modern Interview Platform
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Badge
+                  variant="outline"
+                  className="px-4 py-1.5 text-sm border-primary/20 bg-primary/10 text-primary backdrop-blur-md animate-fade-in"
+                >
+                  <Sparkles className="w-3 h-3 mr-2 fill-primary" />
+                  The #1 AI Interview Platform
+                </Badge>
+              </motion.div>
+
+              <h1 className="text-5xl md:text-7xl font-heading font-bold tracking-tight leading-[1.1]">
+                Master Your <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-purple-400 to-blue-400 animate-gradient-x">
+                  Dream Interview
+                </span>
               </h1>
-              <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-                Streamline assessments, evaluate candidates effectively, and build
-                better teams with FortiTwin's AI-powered platform.
+
+              <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                Practice with our{" "}
+                <span className="text-white font-semibold">Holographic AI Agent</span>
+                , solve real-world coding challenges, and get instant feedback to land your next role.
               </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 pt-4">
-                <Button size="lg" asChild>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+                <Button size="xl" variant="neon" asChild className="w-full sm:w-auto">
                   <Link href="/signup">
-                    Get Started Free <ArrowRight className="ml-2 h-5 w-5" />
+                    Start Practicing Free{" "}
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/features">Learn More</Link>
+                <Button size="xl" variant="glass" asChild className="w-full sm:w-auto">
+                  <Link href="/features">
+                    <Play className="mr-2 h-5 w-5 fill-current" />
+                    Watch Demo
+                  </Link>
                 </Button>
               </div>
-            </motion.div>
 
-            <motion.div
-              className="flex justify-center items-center h-[400px] md:h-[500px] relative"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: "easeInOut" }}
-            >
-              <div className="w-full h-full rounded-lg overflow-hidden">
-                <Spline scene="https://prod.spline.design/qIjHRYzrDY-SIfdj/scene.splinecode" />
+              <div className="flex items-center justify-center lg:justify-start gap-6 pt-8 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-primary" /> 10k+ Students
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-primary" /> Real-time Feedback
+                </div>
               </div>
             </motion.div>
-          </div>
-        </div>
-      </section>
 
-      {/* --- Features Section --- */}
-      <section id="features" className="py-16 md:py-24 bg-background">
-        <div className="container">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, amount: 0.5 }}
-            transition={{ duration: 0.7 }}
-          >
-            <div className="inline-block bg-primary/10 p-3 rounded-lg mb-4">
-              <Star className="w-8 h-8 text-primary" />
+            {/* 3D VISUAL */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1, delay: 0.2 }}
+              className="relative h-[500px] w-full hidden lg:block"
+            >
+              <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent rounded-[2rem] blur-3xl opacity-30" />
+
+              <div className="w-full h-full relative z-10 glass-panel rounded-3xl overflow-hidden border-white/5">
+                <SplineScene scene="https://prod.spline.design/qIjHRYzrDY-SIfdj/scene.splinecode" />
+
+              </div>
+
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute top-10 -left-10 z-20"
+              >
+                <Card variant="glass" className="p-4 flex items-center gap-3 w-auto">
+                  <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <Code2 className="h-5 w-5 text-green-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Coding Score</p>
+                    <p className="font-bold text-white">98/100</p>
+                  </div>
+                </Card>
+              </motion.div>
+
+              <motion.div
+                animate={{ y: [0, 10, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                className="absolute bottom-20 -right-5 z-20"
+              >
+                <Card variant="glass" className="p-4 flex items-center gap-3 w-auto">
+                  <div className="h-10 w-10 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <Trophy className="h-5 w-5 text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Streak</p>
+                    <p className="font-bold text-white">12 Days 🔥</p>
+                  </div>
+                </Card>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* --- BENTO SECTION --- */}
+        <section className="py-24 relative">
+          <div className="container">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-3xl md:text-5xl font-heading font-bold mb-6">
+                Your Personal <span className="text-gradient">Mission Control</span>
+              </h2>
+              <p className="text-lg text-muted-foreground">
+                Track progress, unlock achievements, and grow faster.
+              </p>
             </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why Choose FortiTwin?
-            </h2>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-              Powerful features designed for efficient and fair candidate
-              evaluation.
-            </p>
-          </motion.div>
 
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
-            variants={{
-              visible: { transition: { staggerChildren: 0.1 } },
-            }}
-          >
-            <FeatureCard
-              icon={Video}
-              title="AI-Powered Interviews"
-              description="Conduct structured interviews using our intelligent AI via text or voice."
-            />
-            <FeatureCard
-              icon={FileText}
-              title="Skills Assessments"
-              description="Evaluate technical and soft skills with our comprehensive, customizable assessments."
-            />
-            <FeatureCard
-              icon={BarChart3}
-              title="Data & Analytics"
-              description="Gain deep insights into candidate performance to streamline your hiring decisions."
-            />
-          </motion.div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Feature 1 */}
+              <Card variant="interactive" className="md:col-span-2 p-8 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Video className="w-32 h-32" />
+                </div>
+                <div className="relative z-10">
+                  <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center mb-6">
+                    <Video className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-2">AI Twin Interviewer</h3>
+                  <p className="text-muted-foreground max-w-md">
+                    Realistic mock interviews with an AI-powered 3D agent.
+                  </p>
+                </div>
+              </Card>
 
-          <div className="text-center mt-12">
-            <Button variant="outline" asChild>
-              <Link href="/features">
-                See All Features <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+              {/* Feature 2 */}
+              <Card variant="interactive" className="p-8 group bg-gradient-to-br from-card to-primary/5">
+                <div className="h-12 w-12 rounded-xl bg-blue-500/20 flex items-center justify-center mb-6">
+                  <Code2 className="w-6 h-6 text-blue-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Live IDE</h3>
+                <p className="text-muted-foreground text-sm">Full-featured coding challenges with real execution.</p>
+              </Card>
+
+              {/* Feature 3 */}
+              <Card variant="interactive" className="p-8 group">
+                <div className="h-12 w-12 rounded-xl bg-orange-500/20 flex items-center justify-center mb-6">
+                  <Zap className="w-6 h-6 text-orange-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Gamified Growth</h3>
+                <p className="text-muted-foreground text-sm">Earn XP, maintain streaks, and level up.</p>
+              </Card>
+
+              {/* Feature 4 */}
+              <Card variant="interactive" className="md:col-span-2 p-8 relative overflow-hidden">
+                <div className="absolute inset-0 bg-grid-white/5 mask-image-b-0" />
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                  <div>
+                    <h3 className="text-2xl font-bold text-white mb-2">Detailed Analytics</h3>
+                    <p className="text-muted-foreground max-w-sm">
+                      Get a performance breakdown and personalized improvements.
+                    </p>
+                  </div>
+                  <Button variant="glass" className="shrink-0">View Sample Report</Button>
+                </div>
+              </Card>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* --- Call to Action Section --- */}
-      <section className="py-16 md:py-24 bg-muted/40">
-        <div className="container">
-          <Card className="bg-gradient-to-r from-primary to-purple-600 text-primary-foreground text-center p-8 md:p-12">
-            <h2 className="text-3xl font-bold mb-4">
-              Ready to Improve Your Hiring?
-            </h2>
-            <p className="text-lg text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-              Start your free trial today and discover a better way to assess and
-              interview candidates.
-            </p>
-            <Button size="lg" variant="secondary" asChild>
-              <Link href="/signup">
-                Sign Up Now <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
+        {/* --- CTA SECTION --- */}
+        <section className="py-24 container relative">
+          <div className="absolute inset-0 bg-primary/10 blur-[100px] rounded-full pointer-events-none" />
+          <Card variant="glass" className="relative p-12 md:p-20 text-center overflow-hidden border-primary/30">
+            <div className="relative z-10 max-w-3xl mx-auto">
+              <h2 className="text-4xl md:text-5xl font-heading font-bold mb-6 text-white">Ready to Level Up?</h2>
+              <p className="text-xl text-muted-foreground mb-10">
+                Join thousands of engineers improving daily with FortiTwin.
+              </p>
+              <Button size="xl" variant="neon" asChild>
+                <Link href="/signup">Get Started for Free</Link>
+              </Button>
+            </div>
           </Card>
-        </div>
-      </section>
-    </MainLayout>
+        </section>
+      </main>
+    </div>
   );
 }
-

@@ -1,8 +1,12 @@
-import React from 'react';
+import React from "react";
 
-export function LoadingSpinner() {
+interface SpinnerProps {
+  className?: string;
+}
+
+export function LoadingSpinner({ className }: SpinnerProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black">
+    <div className={className}>
       <div className="relative">
         <div className="w-16 h-16 border-4 border-[#7C3AED] border-t-transparent rounded-full animate-spin"></div>
         <div className="absolute inset-0 flex items-center justify-center">
@@ -11,5 +15,4 @@ export function LoadingSpinner() {
       </div>
     </div>
   );
-} 
-
+}

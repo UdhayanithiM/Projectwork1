@@ -8,5 +8,9 @@
     "dev:web": "cd apps/web && npm run dev",
     "dev:ai": "cd apps/ai-engine && python -m uvicorn app.main:app --reload --port 8000",
     "install:all": "npm install && cd apps/web && npm install"
+  },
+  "dependencies": {
+    "@splinetool/react-spline": "^4.1.0",
+    "@splinetool/runtime": "^1.12.5"
   }
 }

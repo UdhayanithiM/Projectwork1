@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Mic, Power, Activity, Volume2 } from "lucide-react";
+import { Mic, Power, Activity } from "lucide-react";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { cn } from "@/lib/utils";
 
@@ -249,44 +249,47 @@ export function VoiceWindow({ interviewId }: VoiceWindowProps) {
   // -------------------------------------------------------
   if (!hasStarted) {
     return (
-      <div className="flex flex-col h-full items-center justify-center p-8 space-y-8 relative overflow-hidden">
+      <div className="flex flex-col h-full items-center justify-center p-8 space-y-8 relative overflow-hidden bg-black/40 backdrop-blur-xl border border-white/5 rounded-2xl">
         <div className="relative z-10 flex flex-col items-center">
-          <div className="w-32 h-32 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shadow-[0_0_40px_-10px_rgba(124,58,237,0.3)] animate-float">
-            <Mic className="w-12 h-12 text-primary" />
+          <div className="w-32 h-32 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shadow-[0_0_60px_-10px_rgba(124,58,237,0.3)] animate-float">
+            <Mic className="w-12 h-12 text-primary drop-shadow-[0_0_15px_rgba(124,58,237,0.8)]" />
           </div>
 
-          <h2 className="text-3xl font-bold mt-8">Voice Interview</h2>
+          <h2 className="text-3xl font-bold mt-8 text-white font-heading">Voice Interface</h2>
 
-          <p className="text-muted-foreground text-center max-w-sm mt-2">
-            Engage in a natural conversation with our AI.
+          <p className="text-muted-foreground text-center max-w-sm mt-2 font-body">
+            Engage in a natural, real-time conversation with the FortiTwin Neural Core.
           </p>
 
           <Button
-            size="lg"
+            size="lg" // Adjusted size for better fit
+            className="mt-8 rounded-full px-10 shadow-glow-primary bg-primary hover:bg-primary/90 text-white"
             onClick={startSession}
-            className="mt-8 px-8 h-12 text-lg shadow-lg shadow-primary/25 rounded-full"
           >
-            <Power className="mr-2 h-5 w-5" /> Start Session
+            <Power className="mr-2 h-5 w-5" /> Initialize Uplink
           </Button>
         </div>
+        
+        {/* Background Grid */}
+        <div className="absolute inset-0 bg-grid-white/5 opacity-20 pointer-events-none" />
       </div>
     );
   }
 
   // -------------------------------------------------------
-  // UI — SESSION ACTIVE (ORB)
+  // UI — SESSION ACTIVE (HOLOGRAPHIC CORE)
   // -------------------------------------------------------
   return (
-    <div className="flex flex-col h-full items-center justify-between p-8 relative">
+    <div className="flex flex-col h-full items-center justify-between p-8 relative overflow-hidden">
 
-      {/* Connection Status */}
-      <div className="absolute top-4 left-4">
+      {/* Connection Status Pill */}
+      <div className="absolute top-4 left-4 z-20">
         <div
           className={cn(
-            "flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border",
+            "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border backdrop-blur-md transition-all duration-300",
             isConnected
-              ? "bg-green-500/10 text-green-500 border-green-500/20"
-              : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+              ? "bg-green-500/10 text-green-400 border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.2)]"
+              : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20 animate-pulse"
           )}
         >
           <div
@@ -295,44 +298,47 @@ export function VoiceWindow({ interviewId }: VoiceWindowProps) {
               isConnected ? "bg-green-500 animate-pulse" : "bg-yellow-500"
             )}
           />
-          {isConnected ? "Live Connection" : "Connecting..."}
+          {isConnected ? "Signal Locked" : "Searching Frequencies..."}
         </div>
       </div>
 
-      {/* ORB */}
-      <div className="flex-1 flex items-center justify-center w-full">
+      {/* CENTRAL CORE (ORB VISUALIZER) */}
+      <div className="flex-1 flex items-center justify-center w-full relative z-10">
         <div className="relative flex items-center justify-center">
 
-          {/* Rings */}
+          {/* Outer Ripple Rings */}
           <div
             className={cn(
-              "absolute w-64 h-64 rounded-full border border-primary/20 opacity-0 transition-all duration-1000",
+              "absolute w-80 h-80 rounded-full border border-primary/10 opacity-0 transition-all duration-1000",
               (isRecording || aiSpeaking) && "opacity-100 animate-ping"
             )}
           />
           <div
             className={cn(
-              "absolute w-48 h-48 rounded-full border border-primary/40 opacity-0 transition-all duration-1000 delay-75",
+              "absolute w-60 h-60 rounded-full border border-primary/30 opacity-0 transition-all duration-1000 delay-75",
               (isRecording || aiSpeaking) && "opacity-100 animate-pulse"
             )}
           />
 
-          {/* Core Orb */}
+          {/* The Core Orb */}
           <div
             className={cn(
-              "w-32 h-32 rounded-full shadow-[0_0_60px_-10px_rgba(124,58,237,0.6)] flex items-center justify-center transition-all duration-500",
+              "w-40 h-40 rounded-full flex items-center justify-center transition-all duration-500 ease-in-out relative overflow-hidden",
               aiSpeaking
-                ? "bg-gradient-to-br from-primary to-purple-600 scale-110"
-                : "bg-black border-2 border-primary/50"
+                ? "bg-gradient-to-br from-primary via-purple-500 to-blue-600 scale-110 shadow-[0_0_100px_rgba(124,58,237,0.8)]"
+                : "bg-black/80 border-2 border-primary/50 shadow-[0_0_40px_rgba(124,58,237,0.4)]"
             )}
           >
+            {/* Inner Texture/Noise */}
+            <div className="absolute inset-0 bg-white/5 opacity-20 mix-blend-overlay" />
+            
             {aiSpeaking ? (
-              <Activity className="w-12 h-12 text-white animate-bounce" />
+              <Activity className="w-16 h-16 text-white animate-bounce drop-shadow-lg" />
             ) : (
               <Mic
                 className={cn(
-                  "w-10 h-10 text-primary transition-all",
-                  isRecording && "animate-pulse"
+                  "w-12 h-12 text-primary transition-all duration-300",
+                  isRecording && "animate-pulse text-white drop-shadow-[0_0_10px_#fff]"
                 )}
               />
             )}
@@ -340,10 +346,16 @@ export function VoiceWindow({ interviewId }: VoiceWindowProps) {
         </div>
       </div>
 
-      {/* Transcript */}
-      <div className="w-full max-w-2xl text-center space-y-4">
-        <GlassPanel className="p-6 min-h-[100px] flex items-center justify-center">
-          <p className="text-lg font-medium leading-relaxed">
+      {/* Transcript HUD */}
+      <div className="w-full max-w-2xl text-center space-y-6 z-20">
+        <GlassPanel className="p-6 min-h-[120px] flex items-center justify-center border-white/10 bg-black/60 shadow-2xl relative overflow-hidden">
+          {/* Scanning Line Effect */}
+          <div className="absolute top-0 left-0 w-full h-[1px] bg-primary/50 animate-shimmer opacity-30" />
+          
+          <p className={cn(
+            "text-lg md:text-xl font-medium leading-relaxed font-heading transition-all",
+            aiSpeaking ? "text-primary drop-shadow-[0_0_8px_rgba(124,58,237,0.5)]" : "text-white/90"
+          )}>
             "{lastTranscript}"
           </p>
         </GlassPanel>
@@ -357,9 +369,9 @@ export function VoiceWindow({ interviewId }: VoiceWindowProps) {
               stopRecording();
               setHasStarted(false);
             }}
-            className="rounded-full h-12 w-12 border-destructive/30 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/50"
+            className="rounded-full h-14 w-14 border-red-500/30 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 shadow-lg hover:shadow-red-500/50 transition-all duration-300"
           >
-            <Power className="h-5 w-5" />
+            <Power className="h-6 w-6" />
           </Button>
         </div>
       </div>

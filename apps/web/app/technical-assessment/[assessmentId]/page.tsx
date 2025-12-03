@@ -2,21 +2,30 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ResizableHandle, 
+  ResizablePanel, 
+  ResizablePanelGroup 
+} from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Progress } from '@/components/ui/progress';
 import { 
   LoaderCircle, 
   Terminal, 
-  CheckCircle, 
+  CheckCircle2, 
   XCircle, 
   Play, 
   Send, 
   Code2, 
   Cpu, 
-  ArrowLeft 
+  ArrowLeft,
+  Settings,
+  Bug,
+  ListChecks,
+  AlertTriangle
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
@@ -61,6 +70,20 @@ type EvaluationResult = {
   actual?: any;
 };
 
+// --- ANIMATION VARIANTS ---
+const listContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const listItem = {
+  hidden: { opacity: 0, x: -10 },
+  show: { opacity: 1, x: 0 }
+};
+
 // --- MAIN COMPONENT ---
 export default function TechnicalAssessmentPage() {
   const params = useParams();
@@ -73,7 +96,7 @@ export default function TechnicalAssessmentPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [language, setLanguage] = useState('javascript');
-  const [code, setCode] = useState('// Start writing your code here...');
+  const [code, setCode] = useState('// Initialize system...\n// Write your solution below.');
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [evaluationResults, setEvaluationResults] = useState<EvaluationResult[] | null>(null);
@@ -94,8 +117,8 @@ export default function TechnicalAssessmentPage() {
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred.');
         toast({
-          title: "Error",
-          description: err instanceof Error ? err.message : 'Could not load assessment.',
+          title: "System Error",
+          description: "Could not load assessment module.",
           variant: "destructive"
         });
       } finally {
@@ -109,7 +132,7 @@ export default function TechnicalAssessmentPage() {
   const handleRunCode = async () => {
     const questionIds = assessment?.technicalAssessment?.questions.map(q => q.id);
     if (!questionIds || questionIds.length === 0) {
-      toast({ title: "Error", description: "No questions found.", variant: "destructive" });
+      toast({ title: "Error", description: "No questions found in module.", variant: "destructive" });
       return;
     }
 
@@ -123,13 +146,13 @@ export default function TechnicalAssessmentPage() {
       });
       
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Failed to evaluate code.');
+      if (!res.ok) throw new Error(result.error || 'Evaluation Protocol Failed');
       
       setEvaluationResults(result.results[0].testCases);
-      toast({ title: "Evaluation Complete", description: "Check the results console." });
+      // toast({ title: "Execution Complete", description: "Diagnostics available in console." });
 
     } catch (err) {
-      toast({ title: "Error", description: "Evaluation failed.", variant: "destructive" });
+      toast({ title: "Runtime Error", description: "Code evaluation failed.", variant: "destructive" });
     } finally {
       setIsEvaluating(false);
     }
@@ -140,7 +163,7 @@ export default function TechnicalAssessmentPage() {
     try {
       const questionIds = assessment?.technicalAssessment?.questions.map(q => q.id);
       if (!questionIds || !assessment?.technicalAssessment?.id) {
-          throw new Error("Assessment data is missing.");
+          throw new Error("Assessment data corrupted.");
       }
 
       const res = await fetch('/api/assessment/submit', {
@@ -156,12 +179,12 @@ export default function TechnicalAssessmentPage() {
       });
       
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error || 'Failed to submit.');
+      if (!res.ok) throw new Error(result.error || 'Submission Failed');
 
       toast({
-        title: "Success!",
-        description: `Final Score: ${result.score.toFixed(1)}%. Redirecting...`,
-        variant: "success", // Uses our new variant
+        title: "Module Complete",
+        description: `Final Accuracy: ${result.score.toFixed(1)}%. Uploading results...`,
+        className: "bg-green-500 text-white border-0"
       });
 
       setTimeout(() => {
@@ -170,7 +193,7 @@ export default function TechnicalAssessmentPage() {
       }, 2000);
 
     } catch (err) {
-      toast({ title: "Submission Failed", description: "Please try again.", variant: "destructive" });
+      toast({ title: "Submission Failed", description: "Network error. Please try again.", variant: "destructive" });
       setIsSubmitting(false);
     }
   };
@@ -180,9 +203,15 @@ export default function TechnicalAssessmentPage() {
   // --- LOADING STATE ---
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background flex-col gap-4">
-        <LoaderCircle className="h-12 w-12 animate-spin text-primary" />
-        <p className="text-lg font-medium text-muted-foreground animate-pulse">Initializing Environment...</p>
+      <div className="flex h-screen items-center justify-center bg-[#09090b] flex-col gap-6">
+        <div className="relative">
+          <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+          <LoaderCircle className="h-16 w-16 animate-spin text-primary relative z-10" />
+        </div>
+        <div className="space-y-2 text-center">
+          <h2 className="text-xl font-bold text-white tracking-widest uppercase">Initializing IDE</h2>
+          <p className="text-sm text-muted-foreground font-mono">Loading Sandbox Environment...</p>
+        </div>
       </div>
     );
   }
@@ -190,69 +219,104 @@ export default function TechnicalAssessmentPage() {
   // --- ERROR STATE ---
   if (error || !question) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background p-4">
-        <GlassPanel className="max-w-md p-8 text-center border-destructive/30">
-          <Terminal className="h-12 w-12 text-destructive mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-destructive mb-2">Error Loading Assessment</h2>
-          <p className="text-muted-foreground mb-6">{error || 'Invalid assessment data.'}</p>
-          <Button variant="outline" onClick={() => router.push('/dashboard')}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Return to Dashboard
+      <div className="flex h-screen items-center justify-center bg-[#09090b] p-4">
+        <GlassPanel className="max-w-md p-8 text-center border-destructive/30 bg-destructive/5">
+          <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-destructive mb-2">Module Load Error</h2>
+          <p className="text-muted-foreground mb-6 font-mono text-sm">{error || 'Data corruption detected.'}</p>
+          <Button variant="outline" onClick={() => router.push('/dashboard')} className="border-destructive/30 hover:bg-destructive/10 hover:text-destructive">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Return to Mission Control
           </Button>
         </GlassPanel>
       </div>
     );
   }
 
+  // --- CALC PASS RATE ---
+  const passedCount = evaluationResults?.filter(r => r.status === 'passed').length || 0;
+  const totalCount = evaluationResults?.length || 0;
+  const passRate = totalCount > 0 ? (passedCount / totalCount) * 100 : 0;
+
   // --- IDE LAYOUT ---
   return (
-    <div className="h-screen w-screen flex flex-col bg-background text-foreground overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-[#09090b] text-foreground overflow-hidden font-sans selection:bg-primary/30">
       
       {/* 1. IDE Header */}
-      <header className="h-14 shrink-0 border-b border-white/10 bg-[#0a0a0b] flex items-center justify-between px-4 z-50">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="text-muted-foreground hover:text-white">
+      <header className="h-14 shrink-0 border-b border-white/5 bg-[#0a0a0b]/80 backdrop-blur-md flex items-center justify-between px-4 z-50">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => router.push('/dashboard')} className="text-muted-foreground hover:text-white hover:bg-white/5">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div className="flex items-center gap-2">
-            <Cpu className="h-5 w-5 text-primary" />
-            <span className="font-bold text-sm tracking-wide">
-              <span className="text-primary">Forti</span>Twin IDE
-            </span>
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+              <Cpu className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <div className="font-bold text-sm tracking-wide text-white leading-none">
+                FortiTwin <span className="text-primary">IDE</span>
+              </div>
+              <div className="text-[10px] text-muted-foreground font-mono mt-0.5 uppercase tracking-wider">
+                v2.4.0 Stable
+              </div>
+            </div>
           </div>
-          <div className="h-4 w-[1px] bg-white/10 mx-2" />
-          <h1 className="text-sm font-medium text-muted-foreground truncate max-w-[200px]">
-            {question.title}
-          </h1>
+          <div className="h-6 w-[1px] bg-white/10 mx-2" />
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className={cn(
+                "text-[10px] px-2 py-0.5 border-0 font-bold uppercase tracking-wider",
+                question.difficulty === "Hard" ? "bg-red-500/10 text-red-500" :
+                question.difficulty === "Medium" ? "bg-yellow-500/10 text-yellow-500" :
+                "bg-green-500/10 text-green-500"
+              )}>
+                {question.difficulty}
+            </Badge>
+            <h1 className="text-sm font-medium text-white/80 truncate max-w-[300px]">
+              {question.title}
+            </h1>
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
           <Select value={language} onValueChange={setLanguage}>
-            <SelectTrigger className="w-[140px] h-8 bg-white/5 border-white/10 text-xs">
+            <SelectTrigger className="w-[140px] h-9 bg-white/5 border-white/10 text-xs font-medium text-white/80 hover:bg-white/10 transition-colors focus:ring-primary/20">
+              <Code2 className="w-3.5 h-3.5 mr-2 text-primary" />
               <SelectValue placeholder="Language" />
             </SelectTrigger>
-            <SelectContent className="bg-[#1e1e1e] border-white/10">
-              <SelectItem value="javascript">JavaScript</SelectItem>
-              <SelectItem value="python">Python</SelectItem>
+            <SelectContent className="bg-[#1e1e1e] border-white/10 text-white">
+              <SelectItem value="javascript">JavaScript (Node)</SelectItem>
+              <SelectItem value="python">Python 3.9</SelectItem>
             </SelectContent>
           </Select>
 
+          <div className="h-6 w-[1px] bg-white/10" />
+
+          <Button 
+            size="sm" 
+            onClick={handleRunCode} 
+            disabled={isEvaluating || isSubmitting}
+            className="h-9 px-4 bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 border border-blue-600/20 shadow-none hover:shadow-[0_0_15px_rgba(37,99,235,0.2)] transition-all"
+          >
+            {isEvaluating ? <LoaderCircle className="mr-2 h-3.5 w-3.5 animate-spin"/> : <Play className="mr-2 h-3.5 w-3.5 fill-current" />}
+            Run Code
+          </Button>
+
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="sm" variant="default" disabled={isSubmitting} className="h-8 shadow-lg shadow-green-900/20">
-                {isSubmitting ? <LoaderCircle className="mr-2 h-3 w-3 animate-spin"/> : <Send className="mr-2 h-3 w-3" />}
+              <Button size="sm" disabled={isSubmitting} className="h-9 px-5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-[0_0_15px_rgba(124,58,237,0.3)]">
+                {isSubmitting ? <LoaderCircle className="mr-2 h-3.5 w-3.5 animate-spin"/> : <Send className="mr-2 h-3.5 w-3.5" />}
                 Submit
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-[#0a0a0b] border-white/10">
+            <AlertDialogContent className="bg-[#0a0a0b] border-white/10 text-white">
               <AlertDialogHeader>
-                <AlertDialogTitle>Submit Assessment?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will finalize your score. You cannot edit your code afterwards.
+                <AlertDialogTitle>Submit Final Solution?</AlertDialogTitle>
+                <AlertDialogDescription className="text-white/60">
+                  This will execute your code against hidden test cases. Your score will be finalized.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-white/10 hover:bg-white/5">Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleSubmitAssessment} className="bg-primary hover:bg-primary/90">
+                <AlertDialogCancel className="bg-transparent border-white/10 text-white hover:bg-white/5 hover:text-white">Back to Editor</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSubmitAssessment} className="bg-primary hover:bg-primary/90 text-white">
                   Confirm Submission
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -265,151 +329,206 @@ export default function TechnicalAssessmentPage() {
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         
         {/* LEFT PANEL: Problem Description */}
-        <ResizablePanel defaultSize={35} minSize={25} className="bg-background">
+        <ResizablePanel defaultSize={35} minSize={25} className="bg-[#0a0a0b] relative">
           <ScrollArea className="h-full">
-            <div className="p-6 space-y-6">
+            <div className="p-6 space-y-8 pb-20">
+              {/* Title Block */}
               <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <Badge variant="outline" className={cn(
-                    "text-xs px-2 py-0.5 border-white/20",
-                    question.difficulty === "Hard" ? "bg-red-500/10 text-red-400" :
-                    question.difficulty === "Medium" ? "bg-yellow-500/10 text-yellow-400" :
-                    "bg-green-500/10 text-green-400"
-                  )}>
-                    {question.difficulty}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">Technical Assessment</span>
-                </div>
-                <h2 className="text-2xl font-bold mb-4 text-gradient w-fit">{question.title}</h2>
-                <div className="prose prose-invert prose-sm max-w-none text-muted-foreground/90 leading-relaxed">
+                <h2 className="text-2xl font-bold mb-4 text-white font-heading tracking-tight">{question.title}</h2>
+                <div className="prose prose-invert prose-sm max-w-none text-muted-foreground/80 leading-relaxed font-body">
                   {question.description}
                 </div>
               </div>
 
-              {/* Example Case */}
-              <GlassPanel className="p-4 bg-white/5 border-white/10 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wider">
-                  <Code2 className="h-3 w-3" /> Example Case
+              {/* Specs Panel */}
+              <GlassPanel className="p-5 bg-white/[0.02] border-white/5 space-y-4">
+                <div className="flex items-center gap-2 text-xs font-bold text-white/90 uppercase tracking-widest border-b border-white/5 pb-3">
+                  <Terminal className="h-3.5 w-3.5 text-primary" /> Input/Output Specs
                 </div>
-                <div className="space-y-2">
-                  <div className="grid grid-cols-[80px_1fr] gap-2 text-sm">
-                    <span className="text-muted-foreground font-mono">Input:</span>
-                    <code className="bg-black/30 px-2 py-0.5 rounded text-green-300 font-mono">
-                      {JSON.stringify(question.testCases[0]?.input)}
-                    </code>
+                
+                {question.testCases[0] && (
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <span className="text-xs text-muted-foreground font-mono uppercase">Sample Input</span>
+                      <div className="bg-black/50 border border-white/5 p-3 rounded-lg font-mono text-sm text-green-400 overflow-x-auto">
+                        {JSON.stringify(question.testCases[0].input, null, 2)}
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <span className="text-xs text-muted-foreground font-mono uppercase">Expected Output</span>
+                      <div className="bg-black/50 border border-white/5 p-3 rounded-lg font-mono text-sm text-yellow-400 overflow-x-auto">
+                        {JSON.stringify(question.testCases[0].expectedOutput, null, 2)}
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-[80px_1fr] gap-2 text-sm">
-                    <span className="text-muted-foreground font-mono">Output:</span>
-                    <code className="bg-black/30 px-2 py-0.5 rounded text-yellow-300 font-mono">
-                      {JSON.stringify(question.testCases[0]?.expectedOutput)}
-                    </code>
-                  </div>
-                </div>
+                )}
               </GlassPanel>
+
+               {/* Constraints (Mock) */}
+               <div className="space-y-2">
+                 <h4 className="text-xs font-bold text-white/50 uppercase tracking-widest">Constraints</h4>
+                 <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1 font-mono">
+                   <li>0 ≤ n ≤ 10^5</li>
+                   <li>Time Limit: 2.0s</li>
+                   <li>Memory Limit: 256MB</li>
+                 </ul>
+               </div>
             </div>
           </ScrollArea>
         </ResizablePanel>
 
-        <ResizableHandle withHandle className="bg-white/5 hover:bg-primary/50 transition-colors w-1" />
+        <ResizableHandle withHandle className="bg-white/5 hover:bg-primary/50 transition-colors w-1.5 border-l border-white/5" />
 
         {/* RIGHT PANEL: Editor & Console */}
         <ResizablePanel defaultSize={65} minSize={40}>
           <ResizablePanelGroup direction="vertical">
             
             {/* EDITOR AREA */}
-            <ResizablePanel defaultSize={70} minSize={30} className="relative">
-              <CodeEditor 
-                value={code} 
-                onChange={setCode} 
-                language={language}
-                className="bg-[#1e1e1e]" // Explicit VS Code Dark background
-              />
-              {/* Floating Run Button */}
-              <div className="absolute bottom-4 right-4 z-10">
-                <Button 
-                  size="sm" 
-                  onClick={handleRunCode} 
-                  disabled={isEvaluating || isSubmitting}
-                  className="shadow-xl shadow-primary/20 hover:scale-105 transition-transform"
-                >
-                  {isEvaluating ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin"/> : <Play className="mr-2 h-4 w-4 fill-current" />}
-                  Run Code
-                </Button>
+            <ResizablePanel defaultSize={70} minSize={30} className="relative bg-[#1e1e1e]">
+              <div className="absolute top-0 left-0 right-0 h-9 bg-[#1e1e1e] border-b border-white/5 flex items-center px-4 justify-between z-10">
+                <div className="flex items-center gap-2">
+                    <div className="px-3 py-1 bg-[#2d2d2d] rounded-t-sm text-xs text-white border-t-2 border-primary">
+                        solution.{language === 'javascript' ? 'js' : 'py'}
+                    </div>
+                </div>
+                <div className="flex items-center gap-3 text-[10px] text-white/30 font-mono">
+                    <span>UTF-8</span>
+                    <span>{language === 'javascript' ? 'JavaScript' : 'Python'}</span>
+                </div>
+              </div>
+              <div className="pt-9 h-full">
+                <CodeEditor 
+                    value={code} 
+                    onChange={setCode} 
+                    language={language}
+                    className="h-full font-mono text-[13px]"
+                />
               </div>
             </ResizablePanel>
 
-            <ResizableHandle withHandle className="bg-white/5 hover:bg-primary/50 transition-colors h-1" />
+            <ResizableHandle withHandle className="bg-white/5 hover:bg-primary/50 transition-colors h-1.5 border-t border-white/5" />
 
             {/* CONSOLE AREA */}
-            <ResizablePanel defaultSize={30} minSize={10} className="bg-[#0a0a0b]">
-              <div className="h-full flex flex-col">
-                <div className="h-9 border-b border-white/10 px-4 flex items-center gap-2 bg-white/5">
-                  <Terminal className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-xs font-mono text-muted-foreground uppercase">Console Output</span>
+            <ResizablePanel defaultSize={30} minSize={15} className="bg-[#0a0a0b] flex flex-col">
+              {/* Console Header */}
+              <div className="h-10 shrink-0 border-b border-white/10 px-4 flex items-center justify-between bg-white/[0.02]">
+                <div className="flex items-center gap-2">
+                  <Terminal className="h-4 w-4 text-primary/70" />
+                  <span className="text-xs font-bold text-white/70 uppercase tracking-widest">System Console</span>
                 </div>
                 
-                <ScrollArea className="flex-1 p-4 font-mono text-sm">
+                {evaluationResults && (
+                   <div className="flex items-center gap-3">
+                      <span className={cn("text-xs font-bold", passRate === 100 ? "text-green-400" : "text-orange-400")}>
+                         {passRate.toFixed(0)}% Passed
+                      </span>
+                      <Progress value={passRate} className="w-24 h-1.5 bg-white/10" />
+                   </div>
+                )}
+              </div>
+              
+              <ScrollArea className="flex-1 p-4">
+                <div className="font-mono text-sm min-h-full">
                   {!evaluationResults && !isEvaluating && (
-                    <div className="h-full flex flex-col items-center justify-center text-muted-foreground/50 gap-2">
-                      <Terminal className="h-8 w-8 opacity-20" />
-                      <p>Run your code to see results here.</p>
+                    <div className="h-full flex flex-col items-center justify-center text-white/20 gap-3 py-8">
+                      <Bug className="h-10 w-10 opacity-20" />
+                      <p className="text-xs uppercase tracking-widest">Ready to Execute</p>
                     </div>
                   )}
                   
                   {isEvaluating && (
-                    <div className="flex items-center gap-2 text-primary animate-pulse">
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
-                      Evaluating against test cases...
+                    <div className="flex flex-col items-center justify-center py-8 gap-3 text-primary animate-pulse">
+                      <LoaderCircle className="h-6 w-6 animate-spin" />
+                      <span className="text-xs font-bold uppercase tracking-widest">Running Test Suites...</span>
                     </div>
                   )}
 
                   {evaluationResults && (
-                    <div className="space-y-3">
+                    <motion.div 
+                        variants={listContainer}
+                        initial="hidden"
+                        animate="show"
+                        className="space-y-3"
+                    >
                       {evaluationResults.map((result, index) => (
-                        <div key={index} className={cn(
-                          "flex items-start gap-3 p-3 rounded border text-xs",
-                          result.status === 'passed' 
-                            ? "bg-green-500/5 border-green-500/20 text-green-300" 
-                            : "bg-red-500/5 border-red-500/20 text-red-300"
-                        )}>
-                          {result.status === 'passed' 
-                            ? <CheckCircle className="h-4 w-4 shrink-0 text-green-500 mt-0.5"/> 
-                            : <XCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5"/>
-                          }
-                          <div className="space-y-1 w-full">
-                            <div className="flex justify-between font-semibold">
-                              <span>Test Case #{index + 1}</span>
-                              <span className="uppercase">{result.status}</span>
+                        <motion.div 
+                            key={index} 
+                            variants={listItem}
+                            className={cn(
+                                "group relative overflow-hidden rounded border p-3 transition-all",
+                                result.status === 'passed' 
+                                ? "bg-green-500/[0.03] border-green-500/20 hover:bg-green-500/[0.05]" 
+                                : "bg-red-500/[0.03] border-red-500/20 hover:bg-red-500/[0.05]"
+                            )}
+                        >
+                            {/* Decorative Status Line */}
+                            <div className={cn(
+                                "absolute left-0 top-0 bottom-0 w-1", 
+                                result.status === 'passed' ? "bg-green-500" : "bg-red-500"
+                            )} />
+
+                            <div className="pl-3 flex items-start gap-3">
+                                {result.status === 'passed' 
+                                ? <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500 mt-0.5"/> 
+                                : <XCircle className="h-4 w-4 shrink-0 text-red-500 mt-0.5"/>
+                                }
+                                
+                                <div className="space-y-1 w-full">
+                                    <div className="flex justify-between items-center">
+                                        <span className={cn("font-bold text-xs uppercase tracking-wider", result.status === 'passed' ? "text-green-400" : "text-red-400")}>
+                                            Test Case {index + 1}
+                                        </span>
+                                        <span className={cn("text-[10px] px-1.5 py-0.5 rounded border uppercase", 
+                                            result.status === 'passed' ? "bg-green-500/10 border-green-500/20 text-green-400" : "bg-red-500/10 border-red-500/20 text-red-400")}>
+                                            {result.status}
+                                        </span>
+                                    </div>
+
+                                    {result.status === 'failed' && (
+                                        <div className="mt-2 grid grid-cols-1 gap-2 text-xs">
+                                            <div className="bg-black/40 p-2 rounded border border-white/5 flex gap-2 overflow-hidden">
+                                                <span className="text-white/40 w-16 shrink-0">Expected:</span>
+                                                <span className="text-green-400 font-bold truncate">{JSON.stringify(result.expected)}</span>
+                                            </div>
+                                            <div className="bg-black/40 p-2 rounded border border-white/5 flex gap-2 overflow-hidden">
+                                                <span className="text-white/40 w-16 shrink-0">Actual:</span>
+                                                <span className="text-red-400 font-bold truncate">{JSON.stringify(result.actual)}</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {result.status === 'error' && (
+                                        <div className="mt-2 p-2 bg-red-950/20 border border-red-500/10 rounded text-red-300 text-xs font-mono break-all">
+                                            {result.message}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            
-                            {result.status === 'failed' && (
-                              <div className="mt-2 p-2 bg-black/40 rounded border border-white/5 space-y-1">
-                                <div className="flex gap-2">
-                                  <span className="text-muted-foreground w-16">Expected:</span>
-                                  <span className="text-green-400">{JSON.stringify(result.expected)}</span>
-                                </div>
-                                <div className="flex gap-2">
-                                  <span className="text-muted-foreground w-16">Actual:</span>
-                                  <span className="text-red-400">{JSON.stringify(result.actual)}</span>
-                                </div>
-                              </div>
-                            )}
-                            
-                            {result.status === 'error' && (
-                              <p className="mt-1 text-red-400 break-all">{result.message}</p>
-                            )}
-                          </div>
-                        </div>
+                        </motion.div>
                       ))}
-                    </div>
+                    </motion.div>
                   )}
-                </ScrollArea>
-              </div>
+                </div>
+              </ScrollArea>
             </ResizablePanel>
 
           </ResizablePanelGroup>
         </ResizablePanel>
       </ResizablePanelGroup>
+
+      {/* 3. Status Bar */}
+      <footer className="h-6 bg-[#007acc] text-white flex items-center px-3 justify-between text-[10px] font-mono select-none">
+        <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1"><Settings className="w-3 h-3" /> MASTER</span>
+            <span>{isEvaluating ? "EXECUTING..." : "READY"}</span>
+            <span>0 ERRORS</span>
+        </div>
+        <div className="flex items-center gap-4 opacity-80">
+            <span>Ln 1, Col 1</span>
+            <span>UTF-8</span>
+            <span>{language === 'javascript' ? 'JavaScript' : 'Python'}</span>
+        </div>
+      </footer>
     </div>
   );
 }

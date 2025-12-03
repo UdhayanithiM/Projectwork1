@@ -1,41 +1,55 @@
-import 'dotenv/config'; 
+
+// apps/web/next.config.mjs
+import "dotenv/config";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+
   typescript: {
     ignoreBuildErrors: true,
   },
+
   images: {
     unoptimized: true,
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**',
+        protocol: "https",
+        hostname: "**",
       },
     ],
   },
+
   experimental: {
     optimizeCss: true,
-    esmExternals: 'loose',
+    esmExternals: "loose", // Required for some ESM modules (Spline, Three)
   },
-  transpilePackages: ['framer-motion', 'chart.js', 'three'],
+
+  // ⭐ REQUIRED FOR SPLINE + THREE + FRAMER MOTION
+  transpilePackages: [
+  "@splinetool/react-spline",
+  "@splinetool/runtime",
+  "three",
+  "framer-motion"
+],
+
+
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
-      fs: false,
+      fs: false, // prevent server-side fs errors
     };
     return config;
   },
-  // --- PHASE 1 INTEGRATION: REWRITE RULES ---
+
+  // ⭐ Backend rewrite (your Python service)
   async rewrites() {
     return [
       {
-        // Map internal API calls to the Python Service
-        source: '/api/ai/:path*',
-        destination: 'http://127.0.0.1:8000/:path*', 
+        source: "/api/ai/:path*",
+        destination: "http://127.0.0.1:8000/:path*",
       },
     ];
   },

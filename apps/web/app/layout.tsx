@@ -1,10 +1,10 @@
 /**
- * FortiTwin 2.0 — Root Layout (Server Component)
+ * FortiTwin 3.0 — Root Layout (Server Component)
  * Defines global fonts, metadata, theme, and wraps the entire app with Providers.
  */
 
 import type { ReactNode } from "react";
-import "./globals.css"; // Ensure this import path is correct based on your file structure
+import "./globals.css"; 
 
 import {
   Outfit,
@@ -38,18 +38,31 @@ const fontCode = JetBrains_Mono({
 });
 
 /* --------------------------------------------------
-   2. Metadata (SEO-safe)
+   2. Metadata (SEO & Social Sharing)
 -------------------------------------------------- */
 export const metadata: Metadata = {
   title: {
-    default: "FortiTwin",
+    default: "FortiTwin - AI Interview Mastery",
     template: "%s | FortiTwin",
   },
   description:
-    "A modern, AI-powered platform for conducting fair and effective interviews and assessments.",
+    "Ace your technical interviews with FortiTwin. The AI-powered platform for realistic mock interviews, code assessments, and personalized career coaching.",
   icons: {
     icon: "/favicon.ico",
     apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "FortiTwin - AI Interview Mastery",
+    description: "Practice with AI, get instant feedback, and land your dream job.",
+    url: "https://fortitwin.com",
+    siteName: "FortiTwin",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "FortiTwin - AI Interview Mastery",
+    description: "The AI-native interview platform for the next generation of engineers.",
   },
 };
 
@@ -59,7 +72,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#0a0a0b",
+  themeColor: "#0a0a0b", // Matches the Deep Void background
 };
 
 /* --------------------------------------------------
@@ -79,8 +92,7 @@ export default function RootLayout({
       <body
         className={cn(
           "min-h-screen bg-background font-body antialiased",
-          "selection:bg-primary/20 selection:text-primary",
-          // Smooth scrolling across the app
+          "selection:bg-primary/30 selection:text-primary-foreground", // Better text selection contrast
           "scroll-smooth"
         )}
       >
@@ -89,4 +101,3 @@ export default function RootLayout({
     </html>
   );
 }
-
