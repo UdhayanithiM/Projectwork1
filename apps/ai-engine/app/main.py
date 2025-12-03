@@ -1,18 +1,21 @@
-# main.py — REPLACEMENT (drop-in)
 import os
 import logging
 import asyncio
 import websockets
 import json
 import base64
-from fastapi import FastAPI, HTTPException, WebSocket
+import io
+from typing import Optional
+
+from fastapi import FastAPI, HTTPException, WebSocket, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from groq import Groq
 from starlette.websockets import WebSocketDisconnect, WebSocketState
 import websockets.exceptions
+import pypdf # Requires: pip install pypdf
 
-# Import models (your models.py defines SESSION_STORE)
+# Import models
 from .models import (
     StartInterviewRequest,
     StartInterviewResponse,
@@ -20,8 +23,6 @@ from .models import (
     NextQuestionResponse,
     ScoreRequest,
     ScoreResponse,
-    SecurityEvent,
-    EmotionSignal,
     SESSION_STORE,
 )
 from .interview_engine import InterviewEngine
@@ -39,8 +40,8 @@ HUME_API_KEY = os.getenv("HUME_API_KEY")
 
 app = FastAPI(
     title="FortiTwin MVP API",
-    version="0.5.0",
-    description="API backend for adaptive AI-driven interviews (Groq + Hume) - Unified DB.",
+    version="0.6.0",
+    description="Unified AI Engine: Resume Parsing (Groq), Interview Logic, and Hume Proxy.",
 )
 
 app.add_middleware(
@@ -52,14 +53,90 @@ app.add_middleware(
 )
 
 ENGINE = InterviewEngine()
+groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 # -------------------------------------------------------------------
-# Routes
+# Routes: Onboarding & Resume Parsing
 # -------------------------------------------------------------------
+
+@app.post("/api/parse-resume")
+async def parse_resume(file: UploadFile = File(...)):
+    """
+    Receives a PDF resume, extracts text, and uses Groq to analyze skills/seniority.
+    """
+    logger.info(f"📄 Processing resume: {file.filename}")
+
+    # 1. Extract Text from PDF
+    try:
+        content = await file.read()
+        pdf_file = io.BytesIO(content)
+        reader = pypdf.PdfReader(pdf_file)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() + "\n"
+        
+        # Truncate to avoid context limits (approx 10k chars is usually enough for a resume)
+        text = text[:10000]
+        
+    except Exception as e:
+        logger.error(f"PDF extraction failed: {e}")
+        raise HTTPException(status_code=400, detail="Invalid PDF file")
+
+    # 2. Analyze with Groq
+    if not groq_client:
+        logger.warning("Groq API Key missing. Returning mock data.")
+        return {
+            "skills": ["React", "TypeScript", "Node.js (Mock)"],
+            "experience_years": 2,
+            "seniority": "Junior",
+            "suggested_difficulty": "EASY"
+        }
+
+    try:
+        system_prompt = (
+            "You are an expert Technical Recruiter AI. "
+            "Analyze the following resume text and extract key details into a valid JSON object. "
+            "Do not include markdown formatting. "
+            "The JSON must have these keys: "
+            "'skills' (list of strings), "
+            "'experience_years' (integer estimation), "
+            "'seniority' (string: 'Junior', 'Mid-Level', 'Senior'), "
+            "'suggested_difficulty' (string: 'EASY', 'MEDIUM', 'HARD')."
+        )
+
+        chat_completion = groq_client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Resume Text:\n{text}"}
+            ],
+            model="llama-3.1-70b-versatile",
+            temperature=0.1, # Low temp for consistent JSON
+            response_format={"type": "json_object"}
+        )
+
+        result_json = chat_completion.choices[0].message.content
+        data = json.loads(result_json)
+        
+        logger.info(f"✅ Analysis complete: {data.get('seniority')}")
+        return data
+
+    except Exception as e:
+        logger.error(f"Groq Analysis failed: {e}")
+        # Fallback to safe default
+        return {
+            "skills": ["General"],
+            "experience_years": 1,
+            "seniority": "Junior",
+            "suggested_difficulty": "EASY"
+        }
+
+# -------------------------------------------------------------------
+# Routes: Interview Logic
+# -------------------------------------------------------------------
+
 @app.get("/")
 def root():
-    return {"message": "FortiTwin MVP API is running 🚀 (Groq + Hume)"}
-
+    return {"message": "FortiTwin Neural Engine Online 🧠"}
 
 @app.post("/interview/start", response_model=StartInterviewResponse)
 async def start_interview(req: StartInterviewRequest):
@@ -129,11 +206,6 @@ async def score(req: ScoreRequest):
 
 # -------------------------------------------------------------------
 #  VOICE PROXY (HUME AI)
-#  Minimal changes to help continuous / duplex flow:
-#   - request continuous interim transcription in session settings
-#   - mark assistant audio_output as interruptible
-#   - forward partial transcript events to frontend as `user_partial`
-#   - DO NOT drop small/odd-length binary frames from Hume (forward them)
 # -------------------------------------------------------------------
 @app.websocket("/ws/hume/{session_id}")
 async def hume_websocket_proxy(websocket: WebSocket, session_id: str):
@@ -158,13 +230,10 @@ async def hume_websocket_proxy(websocket: WebSocket, session_id: str):
     try:
         hume_socket = await websockets.connect(uri, ping_interval=None)
 
-        # -----------------------
-        # UPDATED: request continuous transcription + interim results
-        # -----------------------
+        # Session Configuration
         config_message = {
             "type": "session_settings",
             "audio": {"encoding": "linear16", "sample_rate": 48000, "channels": 1},
-            # Request continuous transcription and interim (partial) transcripts so frontend can show live text
             "transcription": {"mode": "continuous", "interim_results": True},
             "context": {
                 "text": (
@@ -174,11 +243,12 @@ async def hume_websocket_proxy(websocket: WebSocket, session_id: str):
             },
         }
         await hume_socket.send(json.dumps(config_message))
-        # -----------------------
 
+        # Initial Greeting (if resuming)
         transcript = sess.get("transcript", [])
         if transcript and transcript[-1]["role"] == "interviewer":
             last_q = transcript[-1]["text"]
+            # Truncate context if too long
             if len(last_q) > 250:
                 truncated = last_q[:250]
                 last_punc = max(truncated.rfind("."), truncated.rfind("?"), truncated.rfind("!"))
@@ -187,12 +257,12 @@ async def hume_websocket_proxy(websocket: WebSocket, session_id: str):
             initial_msg = {
                 "type": "assistant_input",
                 "text": last_q,
-                # Mark assistant output interruptible so Hume can detect user speech and stop/resume appropriately
                 "audio_output": {"enable": True, "style": "conversational", "interruptible": True},
             }
             await hume_socket.send(json.dumps(initial_msg))
             await websocket.send_text(json.dumps({"type": "assistant_message", "message": {"content": last_q}}))
 
+        # Helper Functions
         async def safe_send_text_to_frontend(obj: dict):
             try:
                 if websocket.client_state == WebSocketState.CONNECTED:
@@ -207,6 +277,7 @@ async def hume_websocket_proxy(websocket: WebSocket, session_id: str):
             except Exception:
                 pass
 
+        # 1. Frontend -> Hume
         async def forward_from_frontend_to_hume():
             try:
                 while True:
@@ -239,22 +310,21 @@ async def hume_websocket_proxy(websocket: WebSocket, session_id: str):
             except Exception as e:
                 logger.error(f"Error in forward_from_frontend_to_hume: {e}")
 
+        # 2. Hume -> Frontend
         async def forward_from_hume_to_frontend():
             try:
                 while True:
                     data = await hume_socket.recv()
 
-                    # --- FORWARD BINARY FRAMES DIRECTLY (NO FILTER) ---
-                    # Hume may send a mix of binary audio frames and JSON strings.
-                    # Forward raw binary frames to frontend as-is so playback remains continuous.
+                    # Binary Audio
                     if isinstance(data, (bytes, bytearray)):
                         try:
                             await safe_send_bytes_to_frontend(bytes(data))
                         except Exception as e:
                             logger.warning(f"Failed to forward binary frame to frontend: {e}")
                         continue
-                    # --- end binary forward ---
 
+                    # JSON Events
                     try:
                         event = json.loads(data)
                     except Exception:
@@ -263,7 +333,6 @@ async def hume_websocket_proxy(websocket: WebSocket, session_id: str):
 
                     evt_type = event.get("type")
 
-                    # Hume sends base64 audio_output chunks
                     if evt_type == "audio_output":
                         b64 = event.get("data")
                         if b64:
@@ -271,80 +340,60 @@ async def hume_websocket_proxy(websocket: WebSocket, session_id: str):
                                 audio_bytes = base64.b64decode(b64)
                                 await safe_send_bytes_to_frontend(audio_bytes)
                             except Exception as e:
-                                logger.warning(f"Failed to decode/forward audio_output: {e}")
-
+                                logger.warning(f"Failed to decode audio_output: {e}")
                         await safe_send_text_to_frontend({"type": "audio_output_meta", "meta": {"len": len(b64 or "")}})
 
-                    # USER: full transcription (final)
                     elif evt_type == "user_message":
                         user_text = event.get("message", {}).get("content", "")
-
                         if user_text:
+                            await SESSION_STORE.add_transcript(session_id, "candidate", user_text)
+                            
+                            # Generate next AI question dynamically via Groq
+                            # (Here we use the engine logic to fetch next Q based on transcript)
                             try:
-                                await SESSION_STORE.add_transcript(session_id, "candidate", user_text)
-                            except Exception:
-                                pass
-
-                            try:
-                                current_session = await SESSION_STORE.get_session(session_id)
-                            except Exception:
-                                current_session = sess
-
-                            try:
+                                curr_sess = await SESSION_STORE.get_session(session_id)
                                 next_q = ENGINE.next_question(
-                                    current_session.get("job_title"),
-                                    current_session.get("company"),
-                                    current_session.get("personality"),
-                                    current_session.get("rag_context"),
+                                    curr_sess.get("job_title"),
+                                    curr_sess.get("company"),
+                                    curr_sess.get("personality"),
+                                    curr_sess.get("rag_context"),
                                     user_text,
-                                    current_session.get("emotion_context", {}),
-                                    None,
+                                    curr_sess.get("emotion_context", {}),
+                                    None
                                 )
-                            except Exception:
-                                next_q = "Could you expand on that?"
+                            except:
+                                next_q = "Could you elaborate on that?"
 
-                            try:
-                                await SESSION_STORE.add_transcript(session_id, "interviewer", next_q)
-                            except Exception:
-                                pass
+                            await SESSION_STORE.add_transcript(session_id, "interviewer", next_q)
 
+                            # Send text to Hume to speak it
                             assistant_payload = {
                                 "type": "assistant_input",
                                 "text": next_q,
-                                # keep assistant interruptible to allow user to break in
                                 "audio_output": {"enable": True, "style": "conversational", "interruptible": True},
                             }
-
-                            try:
-                                await hume_socket.send(json.dumps(assistant_payload))
-                            except Exception:
-                                pass
-
+                            await hume_socket.send(json.dumps(assistant_payload))
+                            
+                            # Send text to frontend for transcript UI
                             await safe_send_text_to_frontend({"type": "assistant_message", "message": {"content": next_q}})
 
-                    # PARTIAL / INTERIM transcription events (live user speaking)
-                    # We forward them as `user_partial` so frontend can show a live transcript
-                    elif evt_type in {"transcription_partial", "user_partial", "partial_transcript", "speech_hypothesis"}:
-                        # Try to pull a likely text field
-                        partial_text = None
+                    elif evt_type in {"transcription_partial", "user_partial", "partial_transcript"}:
+                        # Real-time transcript updates
                         payload = event.get("message") or event.get("payload") or event
-                        # different payload shapes possible; try common keys
+                        partial_text = None
                         if isinstance(payload, dict):
-                            partial_text = payload.get("content") or payload.get("text") or payload.get("hypothesis")
+                            partial_text = payload.get("content") or payload.get("text")
                         if partial_text:
                             await safe_send_text_to_frontend({"type": "user_partial", "partial": partial_text})
 
                     elif evt_type == "assistant_message":
                         msg_obj = event.get("message", {})
                         content = msg_obj.get("content") if isinstance(msg_obj, dict) else None
-
                         if content:
                             await safe_send_text_to_frontend({"type": "assistant_message", "message": {"content": content}})
-                        else:
-                            await safe_send_text_to_frontend({"type": "assistant_message", "message": msg_obj})
 
                     else:
-                        # Forward other events for telemetry
+                        # Telemetry / Other events
                         await safe_send_text_to_frontend({"type": evt_type or "unknown", "payload": event})
 
             except websockets.exceptions.ConnectionClosed:
@@ -357,32 +406,16 @@ async def hume_websocket_proxy(websocket: WebSocket, session_id: str):
         forward_tasks = [task_front, task_hume]
 
         done, pending = await asyncio.wait(forward_tasks, return_when=asyncio.FIRST_COMPLETED)
+        for t in pending: t.cancel()
 
-        for t in pending:
-            t.cancel()
-
-        for t in done:
-            try:
-                await t
-            except Exception:
-                pass
-
-    except websockets.exceptions.InvalidStatusCode:
-        await websocket.close(code=4001, reason="Hume Auth Failed")
     except Exception:
-        await websocket.close(code=1011, reason="Internal Proxy Error")
+        await websocket.close(code=1011, reason="Upstream Error")
     finally:
         try:
-            if hume_socket and not hume_socket.closed:
-                await hume_socket.close()
+            if hume_socket: await hume_socket.close()
+            await websocket.close()
         except:
             pass
-        try:
-            if websocket.client_state == WebSocketState.CONNECTED:
-                await websocket.close()
-        except:
-            pass
-
 
 # -------------------------------------------------------------------
 # PING
@@ -391,12 +424,14 @@ async def hume_websocket_proxy(websocket: WebSocket, session_id: str):
 def ping_all():
     groq_status = {"ok": False}
     try:
-        client = Groq(api_key=GROQ_API_KEY)
-        client.chat.completions.create(
-            messages=[{"role": "user", "content": "hi"}],
-            model="llama-3.1-8b-instant"
-        )
-        groq_status = {"ok": True}
+        if groq_client:
+            groq_client.chat.completions.create(
+                messages=[{"role": "user", "content": "hi"}],
+                model="llama-3.1-8b-instant"
+            )
+            groq_status = {"ok": True}
+        else:
+            groq_status = {"ok": False, "error": "No API Key"}
     except Exception as e:
         groq_status = {"ok": False, "error": str(e)}
 

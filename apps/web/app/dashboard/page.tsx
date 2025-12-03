@@ -15,21 +15,22 @@ import {
   Play,
   Code2,
   Sparkles,
-  AlertTriangle,
   Loader2,
   CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card"; // Assuming you have your custom Card with variants
+import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useAuthStore } from "@/stores/authStore";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 // --- Types ---
 type Assessment = {
   id: string;
-  status: string; // "PENDING" | "COMPLETED"
+  status: string; // "PENDING" | "IN_PROGRESS" | "COMPLETED" | "PASSED_TECH"
   createdAt: string;
   technicalAssessment: {
     score?: number | null;
@@ -59,17 +60,16 @@ export default function DashboardPage() {
 
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // --- Data Fetching ---
   useEffect(() => {
     const fetchAssessments = async () => {
       try {
         setIsLoading(true);
-        setError(null);
-        const response = await fetch("/api/candidate/assessments", {
-          credentials: "include",
-        });
+        // Note: You need to implement GET /api/candidate/assessments to return the list
+        // For now, we assume this endpoint exists or will be built next.
+        const response = await fetch("/api/candidate/assessments");
 
         if (response.status === 401 || response.status === 403) {
           router.push("/login");
@@ -77,7 +77,7 @@ export default function DashboardPage() {
         }
 
         if (!response.ok) {
-          setAssessments([]); // Fallback to empty
+          setAssessments([]); 
           return;
         }
 
@@ -96,25 +96,53 @@ export default function DashboardPage() {
     }
   }, [user, router]);
 
+  // --- Logic: Handle "Start Mission" Click ---
+  const handleStartMission = async () => {
+    setIsGenerating(true);
+    try {
+      // Call our new Auto-Generate API
+      const res = await fetch("/api/assessment/auto-generate", {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to initialize mission");
+      }
+
+      const data = await res.json();
+      
+      if (data.success && data.assessmentId) {
+        toast.success(data.message || "Mission Initialized");
+        // Redirect to the Technical Assessment
+        router.push(`/technical-assessment/${data.assessmentId}`);
+      } else {
+        toast.error("System Malfunction: Could not generate assessment.");
+      }
+
+    } catch (error) {
+      toast.error("Network Error: Unable to reach command center.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   // --- Derived State ---
-  const upcomingAssessments = assessments.filter((a) => a.status === "PENDING");
+  const upcomingAssessments = assessments.filter((a) => 
+    ["PENDING", "IN_PROGRESS", "PASSED_TECH"].includes(a.status)
+  );
   const completedAssessments = assessments.filter((a) => a.status === "COMPLETED");
   
-  // Stats Calculation
+  // Stats
   const totalCompleted = completedAssessments.length;
-  
-  // Calculate Average Score (Safely)
-  const scoreSum = completedAssessments.reduce((acc, curr) => {
-    return acc + (curr.technicalAssessment?.score || 0);
-  }, 0);
+  const scoreSum = completedAssessments.reduce((acc, curr) => acc + (curr.technicalAssessment?.score || 0), 0);
   const avgScore = totalCompleted > 0 ? Math.round(scoreSum / totalCompleted) : 0;
-
-  // XP Calculation (Mock logic: 100 XP per completed interview)
+  
+  // XP
   const currentXP = totalCompleted * 150; 
-  const nextLevelXP = 1000; // Static goal for now
+  const nextLevelXP = 1000;
   const xpProgress = Math.min((currentXP / nextLevelXP) * 100, 100);
 
-  // Determine Main Mission (First pending, or generic placeholder)
+  // Main Mission Logic
   const currentMission = upcomingAssessments[0];
 
   if (isLoading) {
@@ -132,7 +160,7 @@ export default function DashboardPage() {
       variants={container}
       className="space-y-8 pb-8 font-body"
     >
-      {/* --- HEADER SECTION --- */}
+      {/* --- HEADER --- */}
       <motion.div variants={item} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl md:text-4xl font-heading font-bold text-white">
@@ -143,24 +171,18 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Global XP Bar */}
+        {/* XP Bar */}
         <Card className="p-4 w-full md:w-80 flex flex-col gap-2 border-primary/20 bg-primary/5 backdrop-blur-sm">
           <div className="flex justify-between text-xs font-bold uppercase tracking-wider font-heading">
             <span className="text-primary">Level {Math.floor(totalCompleted / 5) + 1}</span>
             <span className="text-muted-foreground">{currentXP} / {nextLevelXP} XP</span>
           </div>
-          <Progress 
-            value={xpProgress} 
-            className="h-2 bg-primary/10" 
-            // Note: If your UI library supports custom indicator class via prop:
-            // indicatorClassName="bg-gradient-to-r from-primary to-purple-400"
-          />
+          <Progress value={xpProgress} className="h-2 bg-primary/10" />
         </Card>
       </motion.div>
 
-      {/* --- STATS OVERVIEW --- */}
+      {/* --- STATS --- */}
       <motion.div variants={item} className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {/* Streak (Mocked for visual, or link to backend later) */}
         <StatsCard 
           icon={<Flame className="h-5 w-5 text-orange-500 animate-pulse-soft" />}
           bgClass="bg-orange-500/20"
@@ -169,8 +191,6 @@ export default function DashboardPage() {
           label="Current Streak"
           decorator={<Flame className="w-16 h-16 text-orange-500" />}
         />
-
-        {/* Avg Score */}
         <StatsCard 
           icon={<Target className="h-5 w-5 text-blue-500" />}
           bgClass="bg-blue-500/20"
@@ -178,8 +198,6 @@ export default function DashboardPage() {
           value={`${avgScore}%`}
           label="Avg. Score"
         />
-
-        {/* Total Interviews */}
         <StatsCard 
           icon={<Zap className="h-5 w-5 text-purple-500" />}
           bgClass="bg-purple-500/20"
@@ -187,8 +205,6 @@ export default function DashboardPage() {
           value={totalCompleted.toString()}
           label="Interviews Done"
         />
-
-        {/* Leaderboard (Mocked) */}
         <StatsCard 
           icon={<Trophy className="h-5 w-5 text-green-500" />}
           bgClass="bg-green-500/20"
@@ -198,56 +214,48 @@ export default function DashboardPage() {
         />
       </motion.div>
 
-      {/* --- BENTO GRID LAYOUT --- */}
+      {/* --- BENTO GRID --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto lg:h-[500px]">
         
-        {/* MAIN ACTION: Start Interview (2/3 width) */}
+        {/* MAIN MISSION CARD */}
         <motion.div variants={item} className="lg:col-span-2 h-full">
           <Card className="h-full p-8 relative overflow-hidden flex flex-col justify-between group border-primary/30 bg-gradient-to-br from-card via-card to-primary/5 hover:bg-primary/10 transition-all duration-500">
-            {/* Background Graphic */}
             <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/20 blur-[100px] rounded-full pointer-events-none group-hover:bg-primary/30 transition-all duration-500" />
 
-            {/* Dynamic Content based on Pending Assessment */}
             {currentMission ? (
                <ActiveMissionContent assessment={currentMission} />
             ) : (
-               <NewMissionContent />
+               <NewMissionContent onStart={handleStartMission} isStarting={isGenerating} />
             )}
           </Card>
         </motion.div>
 
-        {/* SIDEBAR: Recent Activity & Quick Actions (1/3 width) */}
+        {/* SIDEBAR */}
         <motion.div variants={item} className="h-full flex flex-col gap-6">
-          
-          {/* Upcoming List */}
           <Card className="flex-1 p-6 flex flex-col border-white/5 bg-black/20 backdrop-blur-md">
             <h3 className="font-heading font-bold text-lg mb-4 flex items-center gap-2 text-white">
               <Calendar className="w-5 h-5 text-primary" /> 
-              {upcomingAssessments.length > 1 ? "Also Pending" : "History"}
+              History
             </h3>
             
             <div className="space-y-3 flex-1 overflow-y-auto pr-2 custom-scrollbar min-h-[100px]">
-              {upcomingAssessments.length > 1 ? (
-                 upcomingAssessments.slice(1).map((assessment) => (
-                    <SmallAssessmentItem key={assessment.id} assessment={assessment} />
-                 ))
-              ) : completedAssessments.length > 0 ? (
+              {completedAssessments.length > 0 ? (
                  completedAssessments.slice(0, 3).map((assessment) => (
                     <SmallHistoryItem key={assessment.id} assessment={assessment} />
                  ))
               ) : (
                 <div className="text-sm text-muted-foreground text-center py-8">
-                   No other activity yet.
+                   No completed missions yet.
                 </div>
               )}
             </div>
             
-            <Button variant="ghost" asChild className="w-full mt-4 text-xs uppercase tracking-wider text-muted-foreground hover:text-white hover:bg-white/5">
-              <Link href="/dashboard/interviews">View All History</Link>
+            <Button variant="ghost" className="w-full mt-4 text-xs uppercase tracking-wider text-muted-foreground hover:text-white hover:bg-white/5">
+              View All
             </Button>
           </Card>
 
-          {/* Quick Practice / Daily Coding */}
+          {/* Quick Practice */}
           <Card className="p-6 border-white/5 relative overflow-hidden group bg-card/50">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative z-10">
@@ -260,23 +268,22 @@ export default function DashboardPage() {
               </p>
               <Button 
                 variant="outline" 
-                asChild
+                onClick={handleStartMission} // Reuse the start logic for now
+                disabled={isGenerating}
                 className="w-full border-blue-500/30 hover:bg-blue-500/10 hover:text-blue-400 hover:border-blue-500/50 transition-all group-hover:shadow-[0_0_15px_rgba(59,130,246,0.3)]"
               >
-                <Link href="/technical-assessment/new">
-                   <Play className="w-3 h-3 mr-2 fill-current" /> Solve Random
-                </Link>
+                {isGenerating ? <Loader2 className="w-3 h-3 mr-2 animate-spin"/> : <Play className="w-3 h-3 mr-2 fill-current" />} 
+                Solve Random
               </Button>
             </div>
           </Card>
-
         </motion.div>
       </div>
     </motion.div>
   );
 }
 
-// --- Sub-Components for Cleanliness ---
+// --- Sub-Components ---
 
 function StatsCard({ icon, bgClass, borderHover, value, label, decorator }: any) {
   return (
@@ -298,25 +305,30 @@ function StatsCard({ icon, bgClass, borderHover, value, label, decorator }: any)
 }
 
 function ActiveMissionContent({ assessment }: { assessment: Assessment }) {
-  const isBehavioral = !!assessment.behavioralInterview;
-  const title = isBehavioral ? "Behavioral Interview" : "Technical Assessment";
-  const desc = isBehavioral 
-    ? "Continue your soft skills evaluation with our AI agent." 
+  // Logic: If they passed tech (or have interview pending), send to interview. Else tech.
+  const isInterviewReady = assessment.status === "PASSED_TECH" || assessment.behavioralInterview;
+  
+  const title = isInterviewReady ? "Behavioral Interview" : "Technical Assessment";
+  const desc = isInterviewReady 
+    ? "Technical round passed. Initialize the AI Interviewer for the final phase." 
     : "Resume your coding challenge. Time is ticking!";
   
-  const link = isBehavioral 
-    ? `/take-interview/${assessment.id}` 
+  const link = isInterviewReady 
+    ? `/take-interview/${assessment.id}/intro` // Go to Mirror Room first!
     : `/technical-assessment/${assessment.id}`;
+
+  const statusLabel = isInterviewReady ? "Interview Ready" : "In Progress";
+  const statusColor = isInterviewReady ? "text-green-400 border-green-500/20 bg-green-500/10" : "text-warning border-warning/20 bg-warning/20";
 
   return (
     <>
       <div className="relative z-10 space-y-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-warning/20 text-warning text-xs font-bold uppercase tracking-wider border border-warning/20 backdrop-blur-md">
+        <div className={cn("inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border backdrop-blur-md", statusColor)}>
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-warning opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-warning"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-current"></span>
           </span>
-          In Progress
+          {statusLabel}
         </div>
         
         <div className="space-y-2">
@@ -347,7 +359,7 @@ function ActiveMissionContent({ assessment }: { assessment: Assessment }) {
   )
 }
 
-function NewMissionContent() {
+function NewMissionContent({ onStart, isStarting }: { onStart: () => void, isStarting: boolean }) {
   return (
     <>
       <div className="relative z-10 space-y-6">
@@ -360,49 +372,35 @@ function NewMissionContent() {
           <h2 className="text-3xl md:text-5xl font-heading font-bold text-white leading-tight">
             New Challenge: <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400 animate-gradient-x">
-              System Design & DSA
+              AI-Generated Simulation
             </span>
           </h2>
           <p className="text-muted-foreground max-w-lg text-lg font-body leading-relaxed">
-            Start a new full-stack interview simulation. Test your coding speed and architectural thinking.
+            Start a new full-stack interview simulation tailored to your resume skills and seniority level.
           </p>
         </div>
       </div>
 
       <div className="relative z-10 pt-8 flex flex-col sm:flex-row items-start sm:items-center gap-6">
-        <Button size="xl" variant="default" asChild className="group shadow-glow-primary">
-          <Link href="/technical-assessment/new">
-            Start Simulation
-            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
+        <Button 
+            size="xl" 
+            variant="default" 
+            onClick={onStart}
+            disabled={isStarting}
+            className="group shadow-glow-primary"
+        >
+          {isStarting ? (
+             <><Loader2 className="mr-2 h-5 w-5 animate-spin"/> Generating...</>
+          ) : (
+             <>Start Simulation <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" /></>
+          )}
         </Button>
         <div className="flex items-center gap-6 text-sm text-muted-foreground font-medium">
           <span className="flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> 45 min</span>
-          <span className="flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> Med/Hard</span>
+          <span className="flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> Adaptive</span>
         </div>
       </div>
     </>
-  )
-}
-
-function SmallAssessmentItem({ assessment }: { assessment: Assessment }) {
-  const isBehavioral = !!assessment.behavioralInterview;
-  const link = isBehavioral ? `/take-interview/${assessment.id}` : `/technical-assessment/${assessment.id}`;
-
-  return (
-    <Link href={link} className="block p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-primary/20 transition-all cursor-pointer group">
-      <div className="flex justify-between items-start mb-1">
-        <span className="font-semibold text-white group-hover:text-primary transition-colors font-heading">
-            {isBehavioral ? "Behavioral" : "Technical"} Round
-        </span>
-        <span className="text-[10px] text-muted-foreground bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
-          PENDING
-        </span>
-      </div>
-      <p className="text-xs text-muted-foreground mt-1 truncate">
-        {new Date(assessment.createdAt).toLocaleDateString()}
-      </p>
-    </Link>
   )
 }
 
@@ -414,7 +412,7 @@ function SmallHistoryItem({ assessment }: { assessment: Assessment }) {
       <div className="p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all group">
         <div className="flex justify-between items-start mb-1">
           <span className="font-semibold text-white group-hover:text-primary transition-colors font-heading">
-             {assessment.technicalAssessment ? "Technical" : "Behavioral"}
+              {assessment.technicalAssessment ? "Technical" : "Behavioral"}
           </span>
           <div className={cn("flex items-center gap-1 text-xs px-2 py-0.5 rounded-md border", isPassed ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-red-500/10 text-red-400 border-red-500/20")}>
             {isPassed ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
