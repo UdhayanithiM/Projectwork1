@@ -5,13 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { io, type Socket } from "socket.io-client";
-import { 
-  Clock, 
-  Gauge, 
-  Loader2, 
-  Mic, 
-  MessageSquare, 
-  LogOut, 
+import {
+  Clock,
+  Gauge,
+  Loader2,
+  Mic,
+  MessageSquare,
+  LogOut,
   Activity,
   Wifi,
   WifiOff,
@@ -38,8 +38,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
-// ⭐ PERFORMANCE FIX: Dynamically import Spline to prevent SSR crashes
-const Spline = dynamic(() => import('@splinetool/react-spline'), {
+// ✅ RESTORED: Using your custom wrapper component pattern
+const SplineScene = dynamic(() => import("@/components/SplineScene"), {
   ssr: false,
   loading: () => (
     <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -57,12 +57,12 @@ type AnalysisData = {
 };
 
 // --- Sub-Component: Holographic HUD ---
-const InterviewHUD = ({ 
-  timer, 
-  analysisData, 
-  isConnected 
-}: { 
-  timer: number; 
+const InterviewHUD = ({
+  timer,
+  analysisData,
+  isConnected
+}: {
+  timer: number;
   analysisData: AnalysisData;
   isConnected: boolean;
 }) => {
@@ -78,9 +78,9 @@ const InterviewHUD = ({
       <div className="pointer-events-auto flex items-center gap-4 p-3 rounded-full bg-black/40 border border-white/10 backdrop-blur-md shadow-2xl">
         <div className="flex items-center gap-3 px-2">
           {isConnected ? (
-             <Wifi className="h-4 w-4 text-green-500" />
+            <Wifi className="h-4 w-4 text-green-500" />
           ) : (
-             <WifiOff className="h-4 w-4 text-red-500 animate-pulse" />
+            <WifiOff className="h-4 w-4 text-red-500 animate-pulse" />
           )}
           <span className="font-mono text-xs text-muted-foreground uppercase tracking-widest hidden sm:block">
             {isConnected ? "System Online" : "Reconnecting..."}
@@ -105,8 +105,8 @@ const InterviewHUD = ({
             <Badge variant="outline" className={cn(
               "text-[10px] uppercase border-0 bg-opacity-20",
               analysisData.sentiment.name === "positive" ? "bg-green-500/20 text-green-400" :
-              analysisData.sentiment.name === "negative" ? "bg-red-500/20 text-red-400" :
-              "bg-blue-500/20 text-blue-400"
+                analysisData.sentiment.name === "negative" ? "bg-red-500/20 text-red-400" :
+                  "bg-blue-500/20 text-blue-400"
             )}>
               {analysisData.sentiment.name}
             </Badge>
@@ -142,7 +142,7 @@ export default function TakeInterviewPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-  
+
   const assessmentId = typeof params.assessmentId === "string" ? params.assessmentId : null;
 
   // State
@@ -192,7 +192,7 @@ export default function TakeInterviewPage() {
     });
 
     newSocket.on("disconnect", () => setIsConnected(false));
-    
+
     // Listen for live updates from backend
     newSocket.on("analysisUpdate", (data: Partial<AnalysisData>) => {
       setAnalysisData(prev => ({ ...prev, ...data }));
@@ -239,12 +239,12 @@ export default function TakeInterviewPage() {
 
   return (
     <div className="relative h-screen w-full overflow-hidden bg-black text-white font-body selection:bg-primary/30">
-      
+
       {/* --- LAYER 0: 3D AMBIENT BACKGROUND (Desktop Only) --- */}
       <div className="absolute inset-0 z-0 hidden md:block">
         <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-black z-10 opacity-90" />
         {/* Placeholder Spline Scene - Replace with your specific avatar scene URL */}
-        <Spline scene="https://prod.spline.design/qIjHRYzrDY-SIfdj/scene.splinecode" />
+        <SplineScene scene="https://prod.spline.design/qIjHRYzrDY-SIfdj/scene.splinecode" />
       </div>
 
       {/* --- LAYER 1: HUD & OVERLAYS --- */}
@@ -252,12 +252,12 @@ export default function TakeInterviewPage() {
 
       {/* --- LAYER 2: INTERACTION ZONES --- */}
       <div className="absolute inset-0 z-10 flex flex-col md:flex-row">
-        
+
         {/* Left: The Avatar Context (Clickable space) */}
         <div className="flex-1 hidden md:block" />
 
         {/* Right: The Holographic Terminal */}
-        <motion.div 
+        <motion.div
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -289,7 +289,7 @@ export default function TakeInterviewPage() {
           <div className="flex-1 overflow-hidden relative">
             <AnimatePresence mode="wait">
               {mode === "text" ? (
-                <motion.div 
+                <motion.div
                   key="text"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -299,7 +299,7 @@ export default function TakeInterviewPage() {
                   <ChatWindow socket={socket} interviewId={assessmentId!} />
                 </motion.div>
               ) : (
-                <motion.div 
+                <motion.div
                   key="voice"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}

@@ -1,9 +1,12 @@
 {
-    "compilerOptions": {
-    "ignoreDeprecations": "6.0",
-
+  "compilerOptions": {
+    "ignoreDeprecations": "5.0",
     "target": "esnext",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -15,23 +18,29 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-
     "plugins": [
-      { "name": "next" }
+      {
+        "name": "next"
+      }
     ],
-
     /* Alias config (needs baseUrl) */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@components/*": ["./components/*"],
-      "@app/*": ["./app/*"],
-      "@lib/*": ["./lib/*"]
+      "@/*": [
+        "./*"
+      ],
+      "@components/*": [
+        "./components/*"
+      ],
+      "@app/*": [
+        "./app/*"
+      ],
+      "@lib/*": [
+        "./lib/*"
+      ]
     },
-
     "forceConsistentCasingInFileNames": true
   },
-
   "include": [
     "next-env.d.ts",
     "**/*.ts",
@@ -39,6 +48,8 @@
     ".next/types/**/*.ts",
     "types/**/*.d.ts"
   ],
-
-  "exclude": ["node_modules", "chrome-extension"]
+  "exclude": [
+    "node_modules",
+    "chrome-extension"
+  ]
 }
