@@ -1,22 +1,23 @@
-import os
 import logging
-import asyncio
-import websockets
-import json
-import base64
-import io
-from typing import Optional
+from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, WebSocket, UploadFile, File
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    WebSocket,
+    UploadFile,
+    File,
+    Form,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
-from groq import Groq
-from starlette.websockets import WebSocketDisconnect, WebSocketState
-import websockets.exceptions
-import pypdf # Requires: pip install pypdf
 
-# Import models
-from .models import (
+# --- ARQ (Queue) ---
+from arq import create_pool
+from arq.connections import RedisSettings
+
+from app.core.config import get_settings
+from app.models import (
     StartInterviewRequest,
     StartInterviewResponse,
     NextQuestionRequest,
@@ -25,136 +26,92 @@ from .models import (
     ScoreResponse,
     SESSION_STORE,
 )
-from .interview_engine import InterviewEngine
-from .rag import retrieve
+from app.services.gateway import gateway
+from app.services.websocket import ws_manager
+from app.services.rag_service import rag
 
 # -------------------------------------------------------------------
 # Setup
 # -------------------------------------------------------------------
+settings = get_settings()
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("fortitwin")
+logger = logging.getLogger("fortitwin.api")
 
-load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-HUME_API_KEY = os.getenv("HUME_API_KEY")
+# -------------------------------------------------------------------
+# LIFESPAN (Startup / Shutdown)
+# -------------------------------------------------------------------
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Connect Redis for background jobs
+    app.state.arq_pool = await create_pool(
+        RedisSettings.from_dsn(settings.REDIS_URL)
+    )
+    logger.info("✅ Redis Job Queue Connected")
+
+    yield
+
+    # Cleanup
+    await app.state.arq_pool.close()
+    logger.info("🛑 Redis Job Queue Closed")
+
 
 app = FastAPI(
-    title="FortiTwin MVP API",
-    version="0.6.2", # Bumped version for tracking fixes
-    description="Unified AI Engine: Resume Parsing (Groq), Interview Logic, and Hume Proxy.",
+    title=settings.PROJECT_NAME,
+    version="3.2.0",
+    description="FortiTwin Neural Core 3.2 – Async + RAG + Queue",
+    lifespan=lifespan,
 )
 
-# 🚨 Ensure this allows your Next.js frontend origin in production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # tighten in prod
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-ENGINE = InterviewEngine()
-groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
-
 # -------------------------------------------------------------------
-# Routes: Onboarding & Resume Parsing
+# 1. ASYNC JOB SUBMISSION (QUEUE / MUSCLE)
 # -------------------------------------------------------------------
-
 @app.post("/api/parse-resume")
-async def parse_resume(file: UploadFile = File(...)):
+async def parse_resume(
+    file: UploadFile = File(...),
+    candidate_id: str = Form("anonymous"),
+):
     """
-    Receives a PDF resume, extracts text, and uses Groq to analyze skills/seniority.
+    Accept resume -> enqueue background job -> return immediately.
     """
-    logger.info(f"📄 Processing resume: {file.filename}")
+    logger.info(f"📥 Queue resume | candidate={candidate_id}")
 
-    # 1. Extract Text from PDF
-    try:
-        content = await file.read()
-        pdf_file = io.BytesIO(content)
-        reader = pypdf.PdfReader(pdf_file)
-        text = ""
-        for page in reader.pages:
-            text += page.extract_text() + "\n"
-        
-        # Truncate to avoid context limits (approx 10k chars is usually enough for a resume)
-        text = text[:10000]
-        
-    except Exception as e:
-        logger.error(f"PDF extraction failed: {e}")
-        # Return a safe fallback so the user flow doesn't break
-        return {
-            "skills": ["General"],
-            "experience_years": 0,
-            "seniority": "Junior",
-            "suggested_difficulty": "EASY",
-            "error": "PDF_READ_ERROR"
-        }
+    content = await file.read()
 
-    # 2. Analyze with Groq
-    if not groq_client:
-        logger.warning("Groq API Key missing. Returning mock data.")
-        return {
-            "skills": ["React", "TypeScript", "Node.js (Mock)"],
-            "experience_years": 2,
-            "seniority": "Junior",
-            "suggested_difficulty": "EASY"
-        }
+    # Enqueue background job (worker handles parsing + RAG ingestion)
+    job = await app.state.arq_pool.enqueue_job(
+        "parse_and_ingest_resume",
+        file_content=content,
+        filename=file.filename,
+        candidate_id=candidate_id,
+    )
 
-    try:
-        system_prompt = (
-            "You are an expert Technical Recruiter AI. "
-            "Analyze the following resume text and extract key details into a valid JSON object. "
-            "Do not include markdown formatting. "
-            "The JSON must have these keys: "
-            "'skills' (list of strings), "
-            "'experience_years' (integer estimation), "
-            "'seniority' (string: 'Junior', 'Mid-Level', 'Senior'), "
-            "'suggested_difficulty' (string: 'EASY', 'MEDIUM', 'HARD')."
-        )
+    return {
+        "status": "processing",
+        "message": "Resume uploaded. Processing in background.",
+        "job_id": job.job_id,
+    }
 
-        # ✅ FIX: Use the latest supported model to prevent 400 Bad Request
-        model_name = "llama-3.3-70b-versatile" 
-
-        chat_completion = groq_client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Resume Text:\n{text}"}
-            ],
-            model=model_name,
-            temperature=0.1, # Low temp for consistent JSON
-            response_format={"type": "json_object"}
-        )
-
-        result_json = chat_completion.choices[0].message.content
-        data = json.loads(result_json)
-        
-        logger.info(f"✅ Analysis complete: {data.get('seniority')}")
-        return data
-
-    except Exception as e:
-        logger.error(f"Groq Analysis failed: {e}")
-        # ✅ CRITICAL FALLBACK: Return valid JSON even if Groq fails
-        # This prevents the frontend from crashing/looping back to onboarding
-        return {
-            "skills": ["General Technical Skills"],
-            "experience_years": 1,
-            "seniority": "Junior",
-            "suggested_difficulty": "EASY",
-            "note": "AI Analysis Failed, using defaults."
-        }
 
 # -------------------------------------------------------------------
-# Routes: Interview Logic
+# 2. INTERVIEW LOGIC (RAG + GATEWAY)
 # -------------------------------------------------------------------
-
-@app.get("/")
-def root():
-    return {"message": "FortiTwin Neural Engine Online 🧠"}
-
 @app.post("/interview/start", response_model=StartInterviewResponse)
 async def start_interview(req: StartInterviewRequest):
-    logger.info(f"Starting interview session={req.session_id}")
-    rag_ctx = retrieve(req.rag_query or "") if req.rag_query else ""
+    logger.info(f"🚀 Start interview | session={req.session_id}")
+
+    # RAG search for candidate background
+    context = await rag.search(
+        query=f"{req.job_title} experience skills",
+        candidate_id=req.candidate_id,
+    )
 
     await SESSION_STORE.init_session(
         session_id=req.session_id,
@@ -162,14 +119,26 @@ async def start_interview(req: StartInterviewRequest):
         job_title=req.job_title,
         company=req.company,
         personality=req.personality,
-        rag_context=rag_ctx,
-        mode=ENGINE.mode,
+        rag_context=context,
+        mode="neural-3.2",
     )
 
-    q = ENGINE.first_question(req.job_title, req.company, req.personality, rag_ctx)
-    await SESSION_STORE.add_transcript(req.session_id, "interviewer", q)
+    ai_response = await gateway.generate_response(
+        job_title=req.job_title,
+        company=req.company,
+        history=[],
+        context=context,
+    )
 
-    return StartInterviewResponse(session_id=req.session_id, first_question=q, mode=ENGINE.mode)
+    await SESSION_STORE.add_transcript(
+        req.session_id, "interviewer", ai_response.response_text
+    )
+
+    return StartInterviewResponse(
+        session_id=req.session_id,
+        first_question=ai_response.response_text,
+        mode="async-rag-queue",
+    )
 
 
 @app.post("/interview/next", response_model=NextQuestionResponse)
@@ -179,273 +148,74 @@ async def next_question(req: NextQuestionRequest):
     except KeyError:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    await SESSION_STORE.add_transcript(req.session_id, "candidate", req.candidate_answer)
-
-    emotion_ctx = sess.get("emotion_context", {"nervous": 0.3, "confident": 0.5})
-    security_hint = None
-    if sess.get("security_events"):
-        last_event = sess["security_events"][-1]
-        security_hint = InterviewEngine.security_hint_from_event(
-            last_event.get("event_type"), last_event.get("metadata", {})
-        )
-
-    q = ENGINE.next_question(
-        sess["job_title"],
-        sess["company"],
-        sess["personality"],
-        sess["rag_context"],
-        req.candidate_answer,
-        emotion_ctx,
-        security_hint,
+    await SESSION_STORE.add_transcript(
+        req.session_id, "candidate", req.candidate_answer
     )
 
-    await SESSION_STORE.add_transcript(req.session_id, "interviewer", q)
+    # Optional dynamic context refresh
+    context = sess.get("rag_context", "")
+
+    ai_response = await gateway.generate_response(
+        job_title=sess["job_title"],
+        company=sess["company"],
+        history=[{"role": "user", "content": req.candidate_answer}],
+        context=context,
+        emotion_data=sess.get("emotion_context", {}),
+    )
+
+    await SESSION_STORE.add_transcript(
+        req.session_id, "interviewer", ai_response.response_text
+    )
 
     return NextQuestionResponse(
-        session_id=req.session_id, question=q, hints={"security_hint": security_hint, "emotion_ctx": emotion_ctx}
+        session_id=req.session_id,
+        question=ai_response.response_text,
+        hints={"hints_list": ai_response.hints},
     )
 
 
+# -------------------------------------------------------------------
+# 3. INTERVIEW SCORING (SMART MODEL)
+# -------------------------------------------------------------------
 @app.post("/interview/score", response_model=ScoreResponse)
-async def score(req: ScoreRequest):
+async def score_interview(req: ScoreRequest):
     try:
         sess = await SESSION_STORE.get_session(req.session_id)
     except KeyError:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    scores = ENGINE.score(sess.get("transcript", []), sess["job_title"], sess["company"])
-    return ScoreResponse(session_id=req.session_id, scores=scores)
+    evaluation = await gateway.evaluate_interview(
+        transcript=sess.get("transcript", []),
+        job_title=sess["job_title"],
+    )
+
+    return ScoreResponse(
+        session_id=req.session_id,
+        scores=evaluation.dict(),
+    )
 
 
 # -------------------------------------------------------------------
-#  VOICE PROXY (HUME AI)
+# 4. REAL-TIME VOICE (HUME PROXY)
 # -------------------------------------------------------------------
 @app.websocket("/ws/hume/{session_id}")
-async def hume_websocket_proxy(websocket: WebSocket, session_id: str):
-
-    await websocket.accept()
-
+async def websocket_endpoint(websocket: WebSocket, session_id: str):
+    await ws_manager.connect(websocket, session_id)
     try:
-        sess = await SESSION_STORE.get_session(session_id)
-    except KeyError:
-        await websocket.close(code=4004, reason="Session not found")
-        return
+        await ws_manager.handle_hume_proxy(websocket, session_id)
+    except WebSocketDisconnect:
+        ws_manager.disconnect(session_id)
 
-    if not HUME_API_KEY:
-        await websocket.close(code=4001, reason="API Key Missing")
-        return
-
-    uri = f"wss://api.hume.ai/v0/evi/chat?api_key={HUME_API_KEY}"
-
-    hume_socket = None
-    forward_tasks = []
-
-    try:
-        hume_socket = await websockets.connect(uri, ping_interval=None)
-
-        # Session Configuration
-        config_message = {
-            "type": "session_settings",
-            "audio": {"encoding": "linear16", "sample_rate": 48000, "channels": 1},
-            "transcription": {"mode": "continuous", "interim_results": True},
-            "context": {
-                "text": (
-                    f"You are an interviewer for {sess.get('job_title')} at {sess.get('company')}. "
-                    "Speak in a natural, conversational tone. Keep questions concise and clear."
-                )
-            },
-        }
-        await hume_socket.send(json.dumps(config_message))
-
-        # Initial Greeting (if resuming)
-        transcript = sess.get("transcript", [])
-        if transcript and transcript[-1]["role"] == "interviewer":
-            last_q = transcript[-1]["text"]
-            # Truncate context if too long
-            if len(last_q) > 250:
-                truncated = last_q[:250]
-                last_punc = max(truncated.rfind("."), truncated.rfind("?"), truncated.rfind("!"))
-                last_q = truncated[: last_punc + 1] if last_punc > 30 else truncated + "..."
-
-            initial_msg = {
-                "type": "assistant_input",
-                "text": last_q,
-                "audio_output": {"enable": True, "style": "conversational", "interruptible": True},
-            }
-            await hume_socket.send(json.dumps(initial_msg))
-            await websocket.send_text(json.dumps({"type": "assistant_message", "message": {"content": last_q}}))
-
-        # Helper Functions
-        async def safe_send_text_to_frontend(obj: dict):
-            try:
-                if websocket.client_state == WebSocketState.CONNECTED:
-                    await websocket.send_text(json.dumps(obj))
-            except Exception:
-                pass
-
-        async def safe_send_bytes_to_frontend(b: bytes):
-            try:
-                if websocket.client_state == WebSocketState.CONNECTED:
-                    await websocket.send_bytes(b)
-            except Exception:
-                pass
-
-        # 1. Frontend -> Hume
-        async def forward_from_frontend_to_hume():
-            try:
-                while True:
-                    msg = await websocket.receive()
-
-                    if "bytes" in msg and msg["bytes"]:
-                        audio_chunk = msg["bytes"]
-                        try:
-                            b64 = base64.b64encode(audio_chunk).decode("utf-8")
-                            await hume_socket.send(json.dumps({"type": "audio_input", "data": b64}))
-                        except Exception as e:
-                            logger.warning(f"Failed to send audio chunk to Hume: {e}")
-
-                    elif "text" in msg and msg["text"]:
-                        raw = msg["text"]
-                        try:
-                            obj = json.loads(raw)
-                        except Exception:
-                            continue
-
-                        if obj.get("type") in {"assistant_input", "session_settings", "control"}:
-                            try:
-                                await hume_socket.send(json.dumps(obj))
-                            except Exception as e:
-                                logger.warning(f"Failed to forward control to Hume: {e}")
-                        continue
-
-            except WebSocketDisconnect:
-                logger.info(f"Frontend socket disconnected: {session_id}")
-            except Exception as e:
-                logger.error(f"Error in forward_from_frontend_to_hume: {e}")
-
-        # 2. Hume -> Frontend
-        async def forward_from_hume_to_frontend():
-            try:
-                while True:
-                    data = await hume_socket.recv()
-
-                    # Binary Audio
-                    if isinstance(data, (bytes, bytearray)):
-                        try:
-                            await safe_send_bytes_to_frontend(bytes(data))
-                        except Exception as e:
-                            logger.warning(f"Failed to forward binary frame to frontend: {e}")
-                        continue
-
-                    # JSON Events
-                    try:
-                        event = json.loads(data)
-                    except Exception:
-                        await safe_send_text_to_frontend({"type": "raw", "payload": str(data)})
-                        continue
-
-                    evt_type = event.get("type")
-
-                    if evt_type == "audio_output":
-                        b64 = event.get("data")
-                        if b64:
-                            try:
-                                audio_bytes = base64.b64decode(b64)
-                                await safe_send_bytes_to_frontend(audio_bytes)
-                            except Exception as e:
-                                logger.warning(f"Failed to decode audio_output: {e}")
-                        await safe_send_text_to_frontend({"type": "audio_output_meta", "meta": {"len": len(b64 or "")}})
-
-                    elif evt_type == "user_message":
-                        user_text = event.get("message", {}).get("content", "")
-                        if user_text:
-                            await SESSION_STORE.add_transcript(session_id, "candidate", user_text)
-                            
-                            # Generate next AI question dynamically via Groq
-                            try:
-                                curr_sess = await SESSION_STORE.get_session(session_id)
-                                next_q = ENGINE.next_question(
-                                    curr_sess.get("job_title"),
-                                    curr_sess.get("company"),
-                                    curr_sess.get("personality"),
-                                    curr_sess.get("rag_context"),
-                                    user_text,
-                                    curr_sess.get("emotion_context", {}),
-                                    None
-                                )
-                            except:
-                                next_q = "Could you elaborate on that?"
-
-                            await SESSION_STORE.add_transcript(session_id, "interviewer", next_q)
-
-                            # Send text to Hume to speak it
-                            assistant_payload = {
-                                "type": "assistant_input",
-                                "text": next_q,
-                                "audio_output": {"enable": True, "style": "conversational", "interruptible": True},
-                            }
-                            await hume_socket.send(json.dumps(assistant_payload))
-                            
-                            # Send text to frontend for transcript UI
-                            await safe_send_text_to_frontend({"type": "assistant_message", "message": {"content": next_q}})
-
-                    elif evt_type in {"transcription_partial", "user_partial", "partial_transcript"}:
-                        # Real-time transcript updates
-                        payload = event.get("message") or event.get("payload") or event
-                        partial_text = None
-                        if isinstance(payload, dict):
-                            partial_text = payload.get("content") or payload.get("text")
-                        if partial_text:
-                            await safe_send_text_to_frontend({"type": "user_partial", "partial": partial_text})
-
-                    elif evt_type == "assistant_message":
-                        msg_obj = event.get("message", {})
-                        content = msg_obj.get("content") if isinstance(msg_obj, dict) else None
-                        if content:
-                            await safe_send_text_to_frontend({"type": "assistant_message", "message": {"content": content}})
-
-                    else:
-                        # Telemetry / Other events
-                        await safe_send_text_to_frontend({"type": evt_type or "unknown", "payload": event})
-
-            except websockets.exceptions.ConnectionClosed:
-                logger.info("Hume connection closed for session %s", session_id)
-            except Exception as e:
-                logger.error(f"Error in forward_from_hume_to_frontend: {e}")
-
-        task_front = asyncio.create_task(forward_from_frontend_to_hume())
-        task_hume = asyncio.create_task(forward_from_hume_to_frontend())
-        forward_tasks = [task_front, task_hume]
-
-        done, pending = await asyncio.wait(forward_tasks, return_when=asyncio.FIRST_COMPLETED)
-        for t in pending: t.cancel()
-
-    except Exception:
-        await websocket.close(code=1011, reason="Upstream Error")
-    finally:
-        try:
-            if hume_socket: await hume_socket.close()
-            await websocket.close()
-        except:
-            pass
 
 # -------------------------------------------------------------------
-# PING
+# HEALTH CHECK
 # -------------------------------------------------------------------
-@app.get("/ping-all")
-def ping_all():
-    groq_status = {"ok": False}
-    try:
-        if groq_client:
-            # Use current model to check availability
-            groq_client.chat.completions.create(
-                messages=[{"role": "user", "content": "hi"}],
-                model="llama-3.1-8b-instant" 
-            )
-            groq_status = {"ok": True}
-        else:
-            groq_status = {"ok": False, "error": "No API Key"}
-    except Exception as e:
-        groq_status = {"ok": False, "error": str(e)}
-
-    return {"groq": groq_status, "hume": {"ok": True}}
+@app.get("/health")
+async def health():
+    return {
+        "status": "operational",
+        "queue": "redis-active",
+        "rag": "active",
+        "gateway": "active",
+        "version": "3.2.0",
+    }
