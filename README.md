@@ -1,59 +1,43 @@
-## Title of the Project
-Small description about the project like one below
-The integration of a chatbot within a hostel booking system, aimed at streamlining the reservation process for students and improving the overall user experience.
+# FortiTwin: AI-Powered Interview & Assessment Platform
 
-## About
-<!--Detailed Description about the project-->
-Tailored Chatbot for Hostel Booking System is a project designed to integrate a chatbot that leverages advanced natural language processing techniques to understand and respond to user queries to the hostel booking system. Traditional hostel booking processes are often time-consuming and involve manual searches and extensive communication with hostel staff. This project seeks to overcome these challenges by creating an easy-to-use chatbot interface that assists students in addressing inquiries.
+![FortiTwin Banner](https://via.placeholder.com/1200x400?text=FortiTwin+AI+Platform) ## 🚀 Overview
 
-## Features
-<!--List the features of the project as shown below-->
-- Implements advance neural network method.
-- A framework based application for deployment purpose.
-- High scalability.
-- Less time complexity.
-- A specific scope of Chatbot response model, using json data format.
+**FortiTwin** is a modern, full-stack AI interview platform designed to revolutionize the recruitment process. It acts as a "digital twin" of a professional interviewer, conducting technical and behavioral assessments with real-time feedback.
 
-## Requirements
-<!--List the requirements of the project as shown below-->
-* Operating System: Requires a 64-bit OS (Windows 10 or Ubuntu) for compatibility with deep learning frameworks.
-* Development Environment: Python 3.6 or later is necessary for coding the sign language detection system.
-* Deep Learning Frameworks: TensorFlow for model training, MediaPipe for hand gesture recognition.
-* Image Processing Libraries: OpenCV is essential for efficient image processing and real-time hand gesture recognition.
-* Version Control: Implementation of Git for collaborative development and effective code management.
-* IDE: Use of VSCode as the Integrated Development Environment for coding, debugging, and version control integration.
-* Additional Dependencies: Includes scikit-learn, TensorFlow (versions 2.4.1), TensorFlow GPU, OpenCV, and Mediapipe for deep learning tasks.
+Unlike traditional forms, FortiTwin utilizes **RAG (Retrieval Augmented Generation)** to analyze candidate resumes and generate context-aware questions. It also features an **Emotion Engine** to analyze vocal sentiment (confidence, nervousness) during the interview.
 
-## System Architecture
-<!--Embed the system architecture diagram as shown below-->
+## 🌟 Key Features
 
-![Screenshot 2023-11-25 133637](https://github.com/<<yourusername>>/Hand-Gesture-Recognition-System/assets/75235455/a60c11f3-0a11-47fb-ac89-755d5f45c995)
+* **🧠 AI Neural Core:** Powered by Gemini/OpenAI to conduct dynamic, human-like conversations.
+* **📄 Smart Resume Analysis:** Asynchronously parses resumes to tailor interview questions to the candidate's specific skills.
+* **🗣️ Voice & Emotion Analysis:** Integrated with **Hume AI** to detect vocal cues like confidence and nervousness in real-time.
+* **💻 Technical Sandbox:** Live coding environment for assessing programming skills (supports Python/JS).
+* **📊 Comprehensive Reports:** Generates detailed scorecards covering technical accuracy, communication skills, and behavioral traits.
+* **⚡ Async Architecture:** Uses **Redis** and **ARQ** to handle heavy workloads (PDF parsing, vector embedding) without blocking the UI.
 
+## 🏗️ System Architecture
 
-## Output
+The project follows a monorepo structure:
 
-<!--Embed the Output picture at respective places as shown below as shown below-->
-#### Output1 - Name of the output
+| Service | Path | Tech Stack | Description |
+| :--- | :--- | :--- | :--- |
+| **Web App** | `/apps/web` | Next.js 14, TypeScript, Prisma, Tailwind | The user-facing frontend for Candidates and HR. |
+| **AI Engine** | `/apps/ai-engine` | FastAPI, Python, LangChain, Qdrant | The brain handling LLMs, RAG, and Voice processing. |
+| **Database** | - | MongoDB | Primary data store for users and assessments. |
+| **Queue** | - | Redis + ARQ | Background job processing for resume ingestion. |
 
-![Screenshot 2023-11-25 134037](https://github.com/<<yourusername>>/Hand-Gesture-Recognition-System/assets/75235455/8c2b6b5c-5ed2-4ec4-b18e-5b6625402c16)
+## 🛠️ Prerequisites
 
-#### Output2 - Name of the output
-![Screenshot 2023-11-25 134253](https://github.com/<<yourusername>>/Hand-Gesture-Recognition-System/assets/75235455/5e05c981-05ca-4aaa-aea2-d918dcf25cb7)
+Ensure you have the following installed:
+* **Node.js** (v18+)
+* **Python** (3.10+)
+* **Docker** (optional, for running Redis/Mongo easily)
+* **MongoDB** (or a cloud Atlas URI)
+* **Redis** (required for the AI Engine queue)
 
-Detection Accuracy: 96.7%
-Note: These metrics can be customized based on your actual performance evaluations.
+## 📦 Installation & Setup
 
-
-## Results and Impact
-<!--Give the results and impact as shown below-->
-The Sign Language Detection System enhances accessibility for individuals with hearing and speech impairments, providing a valuable tool for inclusive communication. The project's integration of computer vision and deep learning showcases its potential for intuitive and interactive human-computer interaction.
-
-This project serves as a foundation for future developments in assistive technologies and contributes to creating a more inclusive and accessible digital environment.
-
-## Articles published / References
-1. N. S. Gupta, S. K. Rout, S. Barik, R. R. Kalangi, and B. Swampa, “Enhancing Heart Disease Prediction Accuracy Through Hybrid Machine Learning Methods ”, EAI Endorsed Trans IoT, vol. 10, Mar. 2024.
-2. A. A. BIN ZAINUDDIN, “Enhancing IoT Security: A Synergy of Machine Learning, Artificial Intelligence, and Blockchain”, Data Science Insights, vol. 2, no. 1, Feb. 2024.
-
-
-
-
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/yourusername/fortitwin.git](https://github.com/yourusername/fortitwin.git)
+cd fortitwin
