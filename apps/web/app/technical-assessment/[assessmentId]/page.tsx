@@ -148,8 +148,30 @@ export default function TechnicalAssessmentPage() {
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || 'Evaluation Protocol Failed');
       
-      setEvaluationResults(result.results[0].testCases);
-      // toast({ title: "Execution Complete", description: "Diagnostics available in console." });
+      // --- SAFE DATA VALIDATION ---
+      if (!result || !Array.isArray(result.results)) {
+        console.error("Invalid response:", result);
+        toast({
+          title: "Error",
+          description: "Invalid server response",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const first = result.results[0];
+
+      if (!first || !Array.isArray(first.testCases)) {
+        console.error("Malformed data:", result);
+        toast({
+          title: "Error",
+          description: "Malformed evaluation data",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setEvaluationResults(first.testCases);
 
     } catch (err) {
       toast({ title: "Runtime Error", description: "Code evaluation failed.", variant: "destructive" });
@@ -237,7 +259,6 @@ export default function TechnicalAssessmentPage() {
   const totalCount = evaluationResults?.length || 0;
   const passRate = totalCount > 0 ? (passedCount / totalCount) * 100 : 0;
 
-  // --- IDE LAYOUT ---
   return (
     <div className="h-screen w-screen flex flex-col bg-[#09090b] text-foreground overflow-hidden font-sans selection:bg-primary/30">
       
@@ -332,7 +353,6 @@ export default function TechnicalAssessmentPage() {
         <ResizablePanel defaultSize={35} minSize={25} className="bg-[#0a0a0b] relative">
           <ScrollArea className="h-full">
             <div className="p-6 space-y-8 pb-20">
-              {/* Title Block */}
               <div>
                 <h2 className="text-2xl font-bold mb-4 text-white font-heading tracking-tight">{question.title}</h2>
                 <div className="prose prose-invert prose-sm max-w-none text-muted-foreground/80 leading-relaxed font-body">
@@ -340,7 +360,6 @@ export default function TechnicalAssessmentPage() {
                 </div>
               </div>
 
-              {/* Specs Panel */}
               <GlassPanel className="p-5 bg-white/[0.02] border-white/5 space-y-4">
                 <div className="flex items-center gap-2 text-xs font-bold text-white/90 uppercase tracking-widest border-b border-white/5 pb-3">
                   <Terminal className="h-3.5 w-3.5 text-primary" /> Input/Output Specs
@@ -364,7 +383,6 @@ export default function TechnicalAssessmentPage() {
                 )}
               </GlassPanel>
 
-               {/* Constraints (Mock) */}
                <div className="space-y-2">
                  <h4 className="text-xs font-bold text-white/50 uppercase tracking-widest">Constraints</h4>
                  <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1 font-mono">
@@ -410,7 +428,6 @@ export default function TechnicalAssessmentPage() {
 
             {/* CONSOLE AREA */}
             <ResizablePanel defaultSize={30} minSize={15} className="bg-[#0a0a0b] flex flex-col">
-              {/* Console Header */}
               <div className="h-10 shrink-0 border-b border-white/10 px-4 flex items-center justify-between bg-white/[0.02]">
                 <div className="flex items-center gap-2">
                   <Terminal className="h-4 w-4 text-primary/70" />
@@ -461,7 +478,6 @@ export default function TechnicalAssessmentPage() {
                                 : "bg-red-500/[0.03] border-red-500/20 hover:bg-red-500/[0.05]"
                             )}
                         >
-                            {/* Decorative Status Line */}
                             <div className={cn(
                                 "absolute left-0 top-0 bottom-0 w-1", 
                                 result.status === 'passed' ? "bg-green-500" : "bg-red-500"
@@ -511,7 +527,6 @@ export default function TechnicalAssessmentPage() {
                 </div>
               </ScrollArea>
             </ResizablePanel>
-
           </ResizablePanelGroup>
         </ResizablePanel>
       </ResizablePanelGroup>
