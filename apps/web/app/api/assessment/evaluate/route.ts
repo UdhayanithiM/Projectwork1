@@ -2,23 +2,13 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { runCodeLocal } from '@/lib/localExecutor';
 
 const evaluateCodeSchema = z.object({
   questionIds: z.array(z.string()),
   code: z.string().min(1),
   language: z.enum(["javascript", "python"]),
 });
-
-// Standard Judge0 CE v1.13.1 language IDs
-// Verify yours: GET http://localhost:2358/languages
-const LANGUAGE_ID: Record<string, number> = {
-  javascript: 63, // Node.js 12.14.0
-  python: 71,     // Python 3.8.1
-};
-
-const encodeBase64 = (str: string) => Buffer.from(str).toString("base64");
-const decodeBase64 = (str: string | null) =>
-  str ? Buffer.from(str, "base64").toString("utf-8") : "";
 
 function wrapCode(language: string, code: string, functionName: string, args: any[]): string {
   if (language === "javascript") {
@@ -52,97 +42,6 @@ function parseArgs(input: any): any[] {
   if (Array.isArray(input)) return input;
   if (typeof input === "object" && input !== null) return Object.values(input);
   return [input];
-}
-
-async function getLanguageId(language: string): Promise<number> {
-  // First try env overrides
-  if (language === "javascript" && process.env.JUDGE0_JS_LANG_ID) {
-    return parseInt(process.env.JUDGE0_JS_LANG_ID);
-  }
-  if (language === "python" && process.env.JUDGE0_PY_LANG_ID) {
-    return parseInt(process.env.JUDGE0_PY_LANG_ID);
-  }
-
-  // Fallback: fetch available languages and find best match
-  const JUDGE0_URL = (process.env.JUDGE0_URL || "http://localhost:2358").replace(/\/$/, "");
-  try {
-    const res = await fetch(`${JUDGE0_URL}/languages`);
-    const langs: { id: number; name: string }[] = await res.json();
-
-    if (language === "javascript") {
-      // Prefer Node.js entries
-      const match =
-        langs.find(l => l.name.toLowerCase().includes("node")) ||
-        langs.find(l => l.name.toLowerCase().includes("javascript"));
-      if (match) return match.id;
-    }
-
-    if (language === "python") {
-      // Prefer Python 3
-      const match =
-        langs.find(l => l.name.toLowerCase().includes("python (3")) ||
-        langs.find(l => l.name.toLowerCase().includes("python3")) ||
-        langs.find(l => l.name.toLowerCase().includes("python"));
-      if (match) return match.id;
-    }
-  } catch {
-    // ignore, fall through to hardcoded defaults
-  }
-
-  // Hardcoded fallbacks
-  return LANGUAGE_ID[language] ?? 71;
-}
-
-async function runCode(language: string, code: string): Promise<{ stdout: string; stderr: string }> {
-  const JUDGE0_URL = (process.env.JUDGE0_URL || "http://localhost:2358").replace(/\/$/, "");
-  const languageId = await getLanguageId(language);
-
-  const submitRes = await fetch(`${JUDGE0_URL}/submissions?base64_encoded=true&wait=false`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      language_id: languageId,
-      source_code: encodeBase64(code),
-    }),
-  });
-
-  if (!submitRes.ok) {
-    const txt = await submitRes.text();
-    throw new Error(`Judge0 submit error ${submitRes.status}: ${txt}`);
-  }
-
-  const { token } = await submitRes.json();
-  if (!token) throw new Error("Judge0 returned no token.");
-
-  for (let i = 0; i < 15; i++) {
-    await new Promise((r) => setTimeout(r, 800));
-
-    const pollRes = await fetch(
-      `${JUDGE0_URL}/submissions/${token}?base64_encoded=true&fields=stdout,stderr,compile_output,message,status`,
-      { headers: { Accept: "application/json" } }
-    );
-
-    if (!pollRes.ok) throw new Error(`Judge0 poll error ${pollRes.status}`);
-
-    const data = await pollRes.json();
-    const statusId = data.status?.id;
-
-    if (statusId === 1 || statusId === 2) continue; // still running
-
-    const stdout = decodeBase64(data.stdout);
-    const stderr = decodeBase64(data.stderr);
-    const compileOutput = decodeBase64(data.compile_output);
-    const message = decodeBase64(data.message);
-    const errorText = compileOutput || stderr || message || "";
-
-    if (statusId > 4 && errorText) {
-      return { stdout: "", stderr: `[${data.status?.description}] ${errorText}` };
-    }
-
-    return { stdout, stderr: errorText };
-  }
-
-  throw new Error("Execution timed out.");
 }
 
 export async function POST(request: Request) {
@@ -179,8 +78,12 @@ export async function POST(request: Request) {
         let result: any;
         try {
           const args = parseArgs(testCase.input);
+          
+          // 1. Wrap code with test case arguments
           const wrappedCode = wrapCode(language, code, functionName, args);
-          const { stdout, stderr } = await runCode(language, wrappedCode);
+          
+          // 2. Execute locally (Timeout set to 2.5 seconds)
+          const { stdout, stderr } = await runCodeLocal(language, wrappedCode, 2500);
 
           if (stderr && stderr.trim()) {
             result = { status: "error", message: stderr.trim() };
